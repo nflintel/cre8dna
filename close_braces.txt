@@ -1,0 +1,1071 @@
+1:import React, { useState, useEffect, useRef } from 'react';
+2:import { analyzeStyle, generateArt, analyzeImage, evaluateStyleConsistency, enhancePromptText, upscaleImage, urlToBase64, generateVideo, chatWithAI, textToSpeech, transcribeAudio, analyzeVideo, searchGrounding, mapsGrounding } from './services/gemini';
+3:import { compressImage } from './utils/image';
+4:import { UserProfile, ArtWork, GeneratedImage, ElementWeight, DemoUser, PromptTemplate, CommunityPost, StyleProfile, ChatMessage } from './types';
+5:import { STYLE_PRESETS, DEMO_DATA } from './constants';
+7:import { motion, AnimatePresence } from 'motion/react';
+56:} from 'lucide-react';
+57:import { clsx, type ClassValue } from 'clsx';
+58:import { twMerge } from 'tailwind-merge';
+59:import { auth, db, storage, ref, uploadBytes, uploadString, getDownloadURL, loginWithGoogle, logout, handleFirestoreError, OperationType } from './firebase';
+60:import { onAuthStateChanged, User as FirebaseUser, GoogleAuthProvider } from 'firebase/auth';
+61:import { doc, setDoc, getDoc, updateDoc, deleteDoc, collection, onSnapshot, query, where, orderBy, serverTimestamp, limit, increment } from 'firebase/firestore';
+62:import { Policies } from './components/Policies';
+66:}
+68:const Tooltip = ({ text, children }: { text: string, children: React.ReactNode }) => {
+71:    <div className="relative inline-block" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+72:      {children}
+76:            initial={{ opacity: 0, y: 5, x: '-50%' }}
+77:            animate={{ opacity: 1, y: 0, x: '-50%' }}
+78:            exit={{ opacity: 0, y: 5, x: '-50%' }}
+81:            {text}
+84:        )}
+88:};
+97:}
+99:const DetailedLoading = ({ message, progress, dark = false }: { message: string, progress: number, dark?: boolean }) => (
+103:        <Loader2 className={cn("w-3 h-3 animate-spin flex-shrink-0", dark ? "text-white/40" : "text-[#141414]/40")} />
+104:        <span className={cn("text-[10px] font-bold uppercase tracking-widest truncate", dark ? "text-white/60" : "text-[#141414]/60")}>
+105:          {message}
+108:      <span className={cn("text-[10px] font-mono font-bold flex-shrink-0", dark ? "text-white" : "text-[#141414]")}>
+109:        {Math.round(progress)}%
+112:    <div className={cn("h-1 rounded-full overflow-hidden", dark ? "bg-white/10" : "bg-[#141414]/5")}>
+114:        className={cn("h-full", dark ? "bg-white" : "bg-[#141414]")}
+115:        initial={{ width: 0 }}
+116:        animate={{ width: `${progress}%` }}
+117:        transition={{ duration: 0.3 }}
+140:  } | null>(null);
+167:        }
+168:      } catch (e) {
+170:      } finally {
+172:      }
+173:    };
+175:  }, []);
+184:      }
+185:    } catch (e) {
+187:    }
+188:  };
+232:  const [groundingResults, setGroundingResults] = useState<{ text: string, sources: any[] } | null>(null);
+255:  }, [generations, showFavoritesOnly]);
+257:  const [authError, setAuthError] = useState<{ error: string, details: string, redirectUri?: string } | null>(null);
+280:            });
+283:          } else {
+286:          }
+290:        } catch (error) {
+291:          handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
+292:        }
+293:      } else {
+299:        }
+300:      }
+302:    });
+307:    };
+308:  }, []);
+316:      }
+317:    }, (err) => handleFirestoreError(err, OperationType.GET, `users/${userId}`));
+324:    }, (err) => handleFirestoreError(err, OperationType.LIST, `users/${userId}/artworks`));
+331:    }, (err) => handleFirestoreError(err, OperationType.LIST, `users/${userId}/generations`));
+337:    };
+338:  };
+347:    }
+355:      });
+358:    } catch (error: any) {
+359:      handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
+360:    } finally {
+362:    }
+363:  };
+373:      await updateDoc(userRef, { recentPresetIds: newRecent });
+374:    } catch (err) {
+376:    }
+377:  };
+384:    } catch (err: any) {
+389:      });
+390:    }
+391:  };
+402:        })) as PromptTemplate[];
+404:      }, (error) => {
+406:      });
+409:    }
+410:  }, [user, isDemoMode]);
+420:      })) as CommunityPost[];
+422:    }, (error) => {
+424:    });
+427:  }, []);
+434:      }
+435:    }, (error) => {
+437:    });
+439:  }, []);
+453:      }, { merge: true });
+456:    } catch (err) {
+459:    } finally {
+461:    }
+462:  };
+473:    };
+482:        parts: [{ text: m.content }]
+483:      }));
+486:      Current User Style Profile: ${styleProfile?.fullProfile || 'Not yet analyzed'}.
+496:      };
+499:    } catch (err) {
+502:    } finally {
+504:    }
+505:  };
+509:      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+515:        const blob = new Blob(chunks, { type: 'audio/webm' });
+524:          } catch (err) {
+527:          }
+528:        };
+530:      };
+535:    } catch (err) {
+538:    }
+539:  };
+546:    }
+547:  };
+555:    } catch (err) {
+558:    }
+559:  };
+569:    } catch (err) {
+572:    } finally {
+574:    }
+575:  };
+588:      }]);
+589:    } catch (err) {
+592:    } finally {
+594:    }
+595:  };
+605:        });
+606:        location = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+607:      } catch (e) {
+609:      }
+619:      }]);
+620:    } catch (err) {
+623:    } finally {
+625:    }
+626:  };
+632:          id: `demo_template_${Date.now()}`,
+637:        };
+640:      } else {
+648:        });
+650:      }
+653:    } catch (err: any) {
+656:    } finally {
+658:    }
+659:  };
+667:      } else {
+670:      }
+671:    } catch (err: any) {
+674:    }
+675:  };
+686:    }
+694:  };
+703:  };
+711:    }
+721:    }
+728:      } else {
+729:        setToast(`Maximum limit of ${maxArtworks} files reached.`);
+730:      }
+732:    }
+740:    }));
+748:      setUploadTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'uploading', progress: 10 } : t));
+753:            return { ...t, progress: t.progress + 10 };
+754:          }
+756:        }));
+757:      }, 500);
+765:        });
+772:        const fileRef = ref(storage, `users/${user.uid}/artworks/${task.id}_${file.name}`);
+784:        });
+786:        setUploadTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'success', progress: 100 } : t));
+787:      } catch (error: any) {
+790:        setUploadTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'error', error: error.message || "Failed to upload" } : t));
+791:      }
+795:      }, 5000);
+796:    }
+797:  };
+808:    }
+815:    }
+824:      } catch (err) {
+827:      }
+828:    };
+831:    };
+833:  };
+845:      }, 2000);
+847:    }
+863:          const { data, mimeType } = await urlToBase64(art.imageUrl);
+864:          imageBase64s.push(`data:${mimeType};base64,${data}`);
+865:        } catch (e) {
+866:          console.warn(`Failed to fetch image ${art.imageUrl}`, e);
+867:        } finally {
+870:        }
+871:      }));
+875:      }
+889:      });
+894:    } catch (err: any) {
+897:    } finally {
+900:    }
+901:  };
+919:        setLoadingMessage(`Generating test image ${i + 1}/${testPrompts.length}...`);
+923:      }
+932:      });
+934:    } catch (err: any) {
+937:    } finally {
+940:    }
+941:  };
+949:    }
+954:      } else {
+955:        setToast(`Maximum limit of ${maxGenerations} generations reached.`);
+956:      }
+958:    }
+962:    setLoadingMessage(batchSize > 1 ? `Preparing to forge a batch of ${batchSize} masterpieces...` : 'Preparing to forge your unique masterpiece...');
+971:      const promises = Array.from({ length: batchSize }).map(async (_, index) => {
+984:          { type: textEffectType, color: textEffectColor, intensity: textEffectIntensity }
+988:      });
+998:      } else {
+1001:            id: `demo_gen_${Date.now()}_${i}`,
+1011:            textEffect: { type: textEffectType, color: textEffectColor, intensity: textEffectIntensity },
+1013:          }));
+1016:        } else {
+1022:            const fileRef = ref(storage, `users/${user.uid}/generations/${genId}.png`);
+1038:              textEffect: { type: textEffectType, color: textEffectColor, intensity: textEffectIntensity },
+1046:            });
+1048:          }));
+1049:        }
+1050:        setToast(`Generated and saved ${batchSize} images to your gallery!`);
+1052:      }
+1053:    } catch (err: any) {
+1056:    } finally {
+1059:    }
+1060:  };
+1071:    } catch (err: any) {
+1074:    } finally {
+1076:    }
+1077:  };
+1092:    } catch (err: any) {
+1095:    } finally {
+1098:    }
+1099:  };
+1107:        id: `demo_gen_${Date.now()}`,
+1118:        textEffect: { type: textEffectType, color: textEffectColor, intensity: textEffectIntensity },
+1120:      };
+1125:    }
+1132:      const fileRef = ref(storage, `users/${user.uid}/generations/${genId}.png`);
+1149:        textEffect: { type: textEffectType, color: textEffectColor, intensity: textEffectIntensity },
+1157:      });
+1162:    } catch (error) {
+1165:    }
+1166:  };
+1173:        id: `demo_art_${Date.now()}`,
+1177:      };
+1181:    }
+1188:      const fileRef = ref(storage, `users/${user.uid}/artworks/portfolio_${fileId}.jpg`);
+1199:      });
+1202:    } catch (error) {
+1205:    }
+1206:  };
+1212:      setGenerations(prev => prev.map(g => g.id === id ? { ...g, isFavorite: !currentStatus } : g));
+1213:      if (selectedImage?.id === id) setSelectedImage(prev => prev ? { ...prev, isFavorite: !currentStatus } : null);
+1216:    }
+1222:      });
+1225:        setSelectedImage(prev => prev ? { ...prev, isFavorite: !currentStatus } : null);
+1226:      }
+1228:    } catch (err) {
+1231:    }
+1232:  };
+1242:    }
+1249:    } catch (err) {
+1252:    }
+1253:  };
+1259:    }
+1263:    }
+1270:        });
+1271:      }
+1272:    } catch (err) {
+1275:    }
+1276:  };
+1282:    }
+1287:    }
+1294:    }
+1302:        authorPhoto: userProfile?.photoURL || user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`,
+1308:      });
+1310:    } catch (err) {
+1313:    }
+1314:  };
+1322:      const { data, mimeType } = await urlToBase64(image.imageUrl);
+1323:      const upscaledUrl = await upscaleImage(`data:${mimeType};base64,${data}`, image.prompt, image.aspectRatio);
+1326:      handleDownloadImage(upscaledUrl, `${image.id}-4k`);
+1328:    } catch (error) {
+1331:    } finally {
+1333:    }
+1334:  };
+1344:      link.download = `styleforge-${id}.png`;
+1349:    } catch (error) {
+1354:      link.download = `styleforge-${id}.png`;
+1357:    }
+1358:  };
+1367:    }
+1372:    } catch (err) {
+1375:    }
+1376:  };
+1396:    } else {
+1400:    }
+1405:    window.scrollTo({ top: 0, behavior: 'smooth' });
+1406:  };
+1439:          id: `demo_gen_${Date.now()}`,
+1451:        };
+1454:      } else {
+1471:        });
+1486:        };
+1489:      }
+1492:    } catch (err) {
+1495:    } finally {
+1498:    }
+1499:  };
+1507:  }
+1516:          initial={{ opacity: 0, y: 20 }}
+1517:          animate={{ opacity: 1, y: 0 }}
+1523:                src={siteLogo || "/logo.png"} 
+1530:                }}
+1551:              onClick={handleSelectApiKey}
+1560:  }
+1565:        {/* Decorative background elements */}
+1570:          initial={{ opacity: 0, y: 20 }}
+1571:          animate={{ opacity: 1, y: 0 }}
+1577:                src={siteLogo || "/logo.png"} 
+1584:                }}
+1621:                onClick={handleLogin}
+1628:                onClick={handleTryDemo}
+1640:                  <h4 className="font-bold uppercase tracking-widest text-xs">{authError.error}</h4>
+1642:                <p className="text-xs text-red-600/70 leading-relaxed">{authError.details}</p>
+1647:                      {authError.redirectUri}
+1650:                )}
+1662:            )}
+1670:  }
+1675:    <div className={cn("min-h-screen bg-[#E4E3E0] text-[#141414] font-sans transition-all duration-500", isModalOpen && "overflow-hidden")}>
+1676:      {/* Onboarding Modal */}
+1680:            initial={{ opacity: 0 }}
+1681:            animate={{ opacity: 1 }}
+1682:            exit={{ opacity: 0 }}
+1686:              initial={{ scale: 0.95, opacity: 0 }}
+1687:              animate={{ scale: 1, opacity: 1 }}
+1688:              exit={{ scale: 0.95, opacity: 0 }}
+1693:                onClick={() => setShowOnboarding(false)}
+1727:                  onClick={() => setShowOnboarding(false)}
+1735:        )}
+1738:      {/* Navigation */}
+1739:      <nav className={cn("border-bottom border-[#141414]/10 bg-white/50 backdrop-blur-md sticky top-0 z-50 transition-all duration-500", isModalOpen && "blur-sm opacity-60 pointer-events-none")}>
+1744:                src={siteLogo || "/logo.png"} 
+1747:                onClick={() => setView('upload')}
+1752:                }}
+1754:              <h2 className="text-2xl font-serif italic tracking-tighter cursor-pointer hidden" onClick={() => setView('upload')}>cre8dna</h2>
+1757:                  <NavButton active={view === 'upload'} onClick={() => setView('upload')} icon={<Upload className="w-4 h-4" />} label="Training" />
+1758:                  <NavButton active={view === 'generate'} onClick={() => setView('generate')} icon={<Sparkles className="w-4 h-4" />} label="Forge" disabled={!styleProfile} />
+1759:                  <NavButton active={view === 'gallery'} onClick={() => setView('gallery')} icon={<Grid className="w-4 h-4" />} label="Gallery" />
+1760:                  <NavButton active={view === 'community'} onClick={() => setView('community')} icon={<Users className="w-4 h-4" />} label="Community" />
+1761:                  <NavButton active={view === 'chat'} onClick={() => setView('chat')} icon={<MessageCircle className="w-4 h-4" />} label="Mentor" />
+1762:                  <NavButton active={view === 'video'} onClick={() => setView('video')} icon={<Video className="w-4 h-4" />} label="Veo" />
+1768:                onClick={() => setShowUpgradeModal(true)}
+1773:            )}
+1782:                }}
+1787:            )}
+1794:              }}
+1797:                <p className="text-xs font-bold uppercase tracking-tighter">{userProfile?.displayName || user.displayName}</p>
+1798:                <p className="text-[10px] text-[#141414]/50 uppercase tracking-widest">{isDemoMode ? 'Demo Mode' : `${artworks.length} Drive Photos`}</p>
+1802:                  src={userProfile?.photoURL || user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`} 
+1808:            <button onClick={handleSignOut} className="p-2 hover:bg-red-50 text-red-600 rounded-full transition-colors" title="Sign Out">
+1815:      <main className={cn("max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12 pb-24 sm:pb-12 transition-all duration-500", isModalOpen && "blur-sm opacity-60 pointer-events-none")}>
+1819:              initial={{ opacity: 0, y: -20 }}
+1820:              animate={{ opacity: 1, y: 0 }}
+1821:              exit={{ opacity: 0, y: -20 }}
+1826:                <p className="text-sm font-medium">{error}</p>
+1828:              <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+1832:          )}
+1836:              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+1837:              animate={{ opacity: 1, scale: 1, y: 0 }}
+1838:              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+1844:              <p className="text-xs font-bold uppercase tracking-widest">{toast}</p>
+1846:          )}
+1851:              initial={{ opacity: 0, x: -20 }}
+1852:              animate={{ opacity: 1, x: 0 }}
+1853:              exit={{ opacity: 0, x: 20 }}
+1867:                      <span className={artworks.length >= maxArtworks ? "text-red-500" : "text-[#141414]/40"}>
+1868:                        {artworks.length >= maxArtworks ? "Limit Reached" : "Upload Capacity"}
+1870:                      <span className="text-[#141414]/60">{artworks.length} / {maxArtworks} Images</span>
+1874:                        className={`h-full ${artworks.length >= maxArtworks ? 'bg-red-500' : 'bg-[#141414]'}`}
+1875:                        initial={{ width: 0 }}
+1876:                        animate={{ width: `${Math.min((artworks.length / maxArtworks) * 100, 100)}%` }}
+1881:                  <label className={`group relative border-2 border-dashed rounded-3xl p-12 flex flex-col items-center justify-center gap-4 transition-all bg-white/30 ${artworks.length >= maxArtworks ? 'border-red-200 cursor-not-allowed opacity-50' : 'border-[#141414]/20 hover:border-[#141414]/40 cursor-pointer'}`}>
+1886:                      onChange={handleFileUpload} 
+1888:                      disabled={artworks.length >= maxArtworks}
+1891:                      {artworks.length >= maxArtworks ? <X className="w-8 h-8 text-red-500" /> : <Plus className="w-8 h-8" />}
+1895:                        {artworks.length >= maxArtworks ? "Maximum Limit Reached" : "Drop your art here"}
+1898:                        {artworks.length >= maxArtworks ? "Delete images to upload more" : `Supports PNG, JPG (Max ${maxArtworks} files)`}
+1907:                          key={task.id}
+1908:                          initial={{ opacity: 0, y: 10 }}
+1909:                          animate={{ opacity: 1, y: 0 }}
+1910:                          exit={{ opacity: 0, scale: 0.95 }}
+1914:                            <img src={task.previewUrl} alt="Preview" className="w-full h-full object-cover" />
+1918:                              <p className="text-xs font-medium truncate pr-4">{task.filename}</p>
+1919:                              {task.status === 'uploading' && <Loader2 className="w-4 h-4 animate-spin text-[#141414]/60" />}
+1920:                              {task.status === 'success' && <Check className="w-4 h-4 text-emerald-500" />}
+1921:                              {task.status === 'error' && <AlertCircle className="w-4 h-4 text-red-500" />}
+1924:                              <p className="text-[10px] text-red-500 truncate">{task.error}</p>
+1928:                                  className={cn("h-full", task.status === 'success' ? "bg-emerald-500" : "bg-[#141414]")}
+1929:                                  initial={{ width: 0 }}
+1930:                                  animate={{ width: `${task.progress}%` }}
+1933:                            )}
+1936:                      ))}
+1938:                  )}
+1944:                        key={art.id} 
+1947:                        <img src={art.imageUrl} alt="Art" loading="lazy" className="w-full h-full object-cover" />
+1950:                            onClick={() => handleDeleteArtwork(art.id!)}
+1957:                    ))}
+1968:                          initial={{ width: 0 }}
+1969:                          animate={{ width: `${Math.min((artworks.length / 50) * 100, 100)}%` }}
+1972:                      <p className="text-right text-xs font-mono">{artworks.length}/50</p>
+1976:                            <div key={key} className="p-3 bg-[#141414]/5 rounded-xl border border-[#141414]/5">
+1978:                                {key.replace(/([A-Z])/g, ' $1').trim()}
+1981:                                {value}
+1984:                          ))}
+1986:                      )}
+1995:                        disabled={artworks.length < 5 || isAnalyzing}
+1996:                        onClick={handleAnalyze}
+2000:                        )}
+2003:                          <DetailedLoading message={loadingMessage} progress={loadingProgress} />
+2007:                            {styleProfile ? 'Update Style Profile' : 'Analyze My Style'}
+2009:                        )}
+2013:                      )}
+2022:                          "{styleProfile.fullProfile}"
+2028:                          <div key={key} className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1">
+2030:                              {key.replace(/([A-Z])/g, ' $1').trim()}
+2033:                              {value}
+2036:                        ))}
+2041:                          onClick={handleEvaluateStyle}
+2042:                          disabled={isEvaluating}
+2053:                          )}
+2056:                        <button onClick={() => setView('generate')} className="w-full bg-white text-[#141414] py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all">
+2061:                  )}
+2065:          )}
+2070:              initial={{ opacity: 0, x: -20 }}
+2071:              animate={{ opacity: 1, x: 0 }}
+2072:              exit={{ opacity: 0, x: 20 }}
+2081:                    onClick={() => document.getElementById('forge-history')?.scrollIntoView({ behavior: 'smooth' })}
+2086:                )}
+2089:              {/* Portfolio & Style Section */}
+2098:                      onClick={() => setView('upload')}
+2110:                        {styleProfile ? styleProfile.fullProfile : "Upload your art portfolio to generate your unique style profile."}
+2115:                        <div key={art.id} className="w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden border border-[#141414]/10">
+2116:                          <img src={art.imageUrl} alt="Portfolio" className="w-full h-full object-cover" />
+2118:                      ))}
+2121:                          +{artworks.length - 6}
+2123:                      )}
+2128:                    <label className={`group relative border-2 border-dashed rounded-3xl p-8 flex flex-col items-center justify-center gap-3 transition-all bg-white/50 ${artworks.length >= maxArtworks ? 'border-red-100 cursor-not-allowed opacity-50' : 'border-[#141414]/10 hover:border-[#141414]/20 cursor-pointer'}`}>
+2133:                        onChange={handleFileUpload} 
+2135:                        disabled={artworks.length >= maxArtworks}
+2138:                        {artworks.length >= maxArtworks ? <X className="w-5 h-5 text-red-500" /> : <Plus className="w-5 h-5" />}
+2141:                        {artworks.length >= maxArtworks ? "Limit Reached" : "Add Art"}
+2149:                            key={task.id}
+2150:                            initial={{ opacity: 0, y: 10 }}
+2151:                            animate={{ opacity: 1, y: 0 }}
+2152:                            exit={{ opacity: 0, scale: 0.95 }}
+2156:                              <img src={task.previewUrl} alt="Preview" className="w-full h-full object-cover" />
+2160:                                <p className="text-[10px] font-medium truncate pr-2">{task.filename}</p>
+2161:                                {task.status === 'uploading' && <Loader2 className="w-3 h-3 animate-spin text-[#141414]/60" />}
+2162:                                {task.status === 'success' && <Check className="w-3 h-3 text-emerald-500" />}
+2163:                                {task.status === 'error' && <AlertCircle className="w-3 h-3 text-red-500" />}
+2166:                                <p className="text-[8px] text-red-500 truncate">{task.error}</p>
+2170:                                    className={cn("h-full", task.status === 'success' ? "bg-emerald-500" : "bg-[#141414]")}
+2171:                                    initial={{ width: 0 }}
+2172:                                    animate={{ width: `${task.progress}%` }}
+2175:                              )}
+2178:                        ))}
+2180:                    )}
+2183:                      onClick={handleAnalyze}
+2184:                      disabled={isAnalyzing || artworks.length < 5}
+2195:                      )}
+2200:                        onClick={handleEvaluateStyle}
+2201:                        disabled={isEvaluating}
+2212:                        )}
+2214:                    )}
+2220:                    initial={{ opacity: 0, y: 20 }}
+2221:                    animate={{ opacity: 1, y: 0 }}
+2234:                          )}>
+2235:                            {evaluationResults.score}/10
+2239:                          onClick={() => setEvaluationResults(null)}
+2249:                        <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-[#141414]/10">
+2250:                          <img src={img} alt={`Test ${i}`} className="w-full h-full object-cover" />
+2252:                      ))}
+2260:                        <p className="text-sm text-emerald-900 leading-relaxed">{evaluationResults.strengths}</p>
+2266:                        <p className="text-sm text-amber-900 leading-relaxed">{evaluationResults.weaknesses}</p>
+2274:                      <p className="text-sm text-[#141414]/80 italic leading-relaxed">{evaluationResults.refinedProfile.fullProfile}</p>
+2279:                        }}
+2286:                )}
+2295:                    }}
+2299:                    )}
+2304:                    onClick={() => setGenerationMode('img2img')}
+2308:                    )}
+2317:                      {generationMode === 'img2img' ? 'Additional Instructions (Optional)' : 'Your Prompt'}
+2321:                        onClick={() => setShowTemplateLibrary(true)}
+2330:                          onClick={() => setShowTemplateModal(true)}
+2337:                      )}
+2340:                          onClick={handleEnhancePrompt}
+2341:                          disabled={isEnhancingPrompt}
+2344:                          {isEnhancingPrompt ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+2348:                      )}
+2350:                        onClick={() => setShowAdvanced(!showAdvanced)}
+2356:                        )}
+2358:                        <span className="hidden sm:inline">{showAdvanced ? 'Hide Settings' : 'Generation Settings'}</span>
+2359:                        <span className="sm:hidden">{showAdvanced ? 'Hide' : 'Settings'}</span>
+2360:                        {showAdvanced ? <ChevronLeft className="w-3 h-3 rotate-90" /> : <ChevronRight className="w-3 h-3 rotate-90" />}
+2370:                            key={t.id}
+2373:                              setToast(`Loaded: ${t.name}`);
+2374:                            }}
+2380:                            )}
+2382:                            {t.name}
+2384:                        ))}
+2387:                            onClick={() => setShowTemplateLibrary(true)}
+2390:                            +{promptTemplates.length - 3} More
+2392:                        )}
+2395:                  )}
+2398:                    value={prompt}
+2399:                    onChange={(e) => setPrompt(e.target.value)}
+2400:                    placeholder={generationMode === 'img2img' ? "E.g., Make it look like a sunset, add more blue tones..." : "A futuristic city in the rain, cinematic lighting..."}
+2404:                  {/* Style Strength Slider - Prominently displayed */}
+2413:                      <span className="text-[10px] font-bold text-[#141414]">{styleStrength}%</span>
+2420:                      value={styleStrength} 
+2421:                      onChange={(e) => setStyleStrength(parseInt(e.target.value))}
+2426:                  {/* Reference Image Section - Moved out of advanced for visibility */}
+2428:                    initial={{ opacity: 0, y: 10 }}
+2429:                    animate={{ opacity: 1, y: 0 }}
+2435:                          Reference Image {generationMode === 'img2img' ? '(Required)' : '(Optional - Switches to Img2Img)'}
+2443:                            onClick={() => setReferenceImage(null)}
+2448:                        )}
+2456:                            onChange={handleReferenceUpload} 
+2477:                            <img src={referenceImage} alt="Reference" className="max-h-[200px] object-contain rounded-xl shadow-sm transition-transform group-hover:scale-[1.02]" />
+2484:                            onClick={handleAnalyzeImage}
+2485:                            disabled={isAnalyzingImage}
+2489:                            )}
+2492:                              <DetailedLoading message={loadingMessage} progress={loadingProgress} />
+2498:                            )}
+2509:                              <span className="text-[10px] font-bold text-[#141414]">{referenceImageStrength}%</span>
+2516:                              value={referenceImageStrength} 
+2517:                              onChange={(e) => setReferenceImageStrength(parseInt(e.target.value))}
+2522:                      )}
+2529:                      initial={{ height: 0, opacity: 0 }}
+2530:                      animate={{ height: 'auto', opacity: 1 }}
+2531:                      exit={{ height: 0, opacity: 0 }}
+2534:                      {/* Section: Reference & Style */}
+2536:                        {/* Style Presets Section */}
+2548:                                  key={cat}
+2549:                                  onClick={() => setActiveStyleCategory(cat)}
+2555:                                  )}
+2557:                                  {cat}
+2559:                              ))}
+2563:                          {/* Recently Used Section */}
+2573:                              )}>
+2579:                                      key={`recent-${preset.id}`}
+2584:                                        }
+2587:                                      }}
+2594:                                      )}
+2597:                                        <p className="text-[10px] font-bold uppercase tracking-widest">{preset.name}</p>
+2598:                                        {preset.isPro && !isPro && <Crown className="w-3 h-3 text-amber-500" />}
+2603:                                      )}>
+2604:                                        {preset.description}
+2610:                                      )}
+2613:                                })}
+2617:                          )}
+2622:                          )}>
+2627:                                  key={preset.id}
+2632:                                    }
+2635:                                  }}
+2642:                                  )}
+2645:                                    <p className="text-[10px] font-bold uppercase tracking-widest">{preset.name}</p>
+2646:                                    {preset.isPro && !isPro && <Crown className="w-3 h-3 text-amber-500" />}
+2651:                                  )}>
+2652:                                    {preset.description}
+2658:                                  )}
+2660:                              ))}
+2665:                      {/* Section: Visual Composition & Style Control */}
+2667:                        {/* Visual Composition */}
+2684:                                  { id: '1:1', label: 'Square' },
+2685:                                  { id: '4:3', label: 'Classic' },
+2686:                                  { id: '3:4', label: 'Portrait' },
+2687:                                  { id: '16:9', label: 'Wide' },
+2688:                                  { id: '9:16', label: 'Story' },
+2689:                                  { id: '21:9', label: 'Cinematic' },
+2692:                                    key={ratio.id}
+2693:                                    onClick={() => setAspectRatio(ratio.id)}
+2699:                                    )}
+2701:                                    {ratio.label}
+2703:                                ))}
+2716:                                  { id: '512px', label: 'Draft' },
+2717:                                  { id: '1K', label: 'Standard' },
+2718:                                  { id: '2K', label: 'High Def' },
+2719:                                  { id: '4K', label: 'Ultra HD', pro: true },
+2722:                                    key={size.id}
+2727:                                      }
+2729:                                    }}
+2736:                                    )}
+2738:                                    {size.label}
+2739:                                    {size.pro && !isPro && <Crown className="w-3 h-3 text-amber-500" />}
+2741:                                ))}
+2748:                      {/* Section: Technical Parameters */}
+2764:                              <span className="text-[10px] font-bold text-[#141414]">{batchSize}</span>
+2769:                              max={isPro ? "4" : "1"} 
+2770:                              value={batchSize}
+2771:                              onChange={(e) => setBatchSize(parseInt(e.target.value))}
+2776:                              <span>{isPro ? "4 Images" : "Pro Only"}</span>
+2789:                              value={seed || ''}
+2790:                              onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : undefined)}
+2805:                              value={negativePrompt}
+2806:                              onChange={(e) => setNegativePrompt(e.target.value)}
+2820:                              <span className="text-[10px] font-bold text-[#141414]">{saveQuality}%</span>
+2827:                              value={saveQuality}
+2828:                              onChange={(e) => setSaveQuality(parseInt(e.target.value))}
+2838:                        {/* Section: Text Effects */}
+2856:                                    key={type}
+2857:                                    onClick={() => setTextEffectType(type as any)}
+2863:                                    )}
+2865:                                    {type}
+2867:                                ))}
+2881:                                  value={textEffectColor}
+2882:                                  onChange={(e) => setTextEffectColor(e.target.value)}
+2887:                                  value={textEffectColor}
+2888:                                  onChange={(e) => setTextEffectColor(e.target.value)}
+2902:                                <span className="text-[10px] font-bold text-[#141414]">{textEffectIntensity}%</span>
+2908:                                value={textEffectIntensity}
+2909:                                onChange={(e) => setTextEffectIntensity(parseInt(e.target.value))}
+2916:                        {/* Element Weights Section - Moved here next to Negative Prompt */}
+2933:                                <div key={ew.id} className="flex flex-col gap-2 p-4 bg-[#141414]/5 border border-[#141414]/5 rounded-2xl relative group">
+2938:                                  )}
+2943:                                      value={ew.text}
+2948:                                      }}
+2952:                                      <span className="text-[10px] font-bold text-[#141414] w-8 text-right">{ew.weight}%</span>
+2957:                                        }}
+2969:                                    value={ew.weight}
+2974:                                    }}
+2978:                              ))}
+2985:                                  }
+2986:                                  setElementWeights([...elementWeights, { id: Math.random().toString(36).substr(2, 9), text: '', weight: 50 }]);
+2987:                                }}
+2991:                                )}
+3010:                            setElementWeights([{ id: '1', text: '', weight: 50 }]);
+3012:                          }}
+3019:                  )}
+3024:                    disabled={(generationMode === 'text2img' && !prompt) || (generationMode === 'img2img' && !referenceImage) || isGenerating || generations.length + batchSize > maxGenerations}
+3025:                    onClick={handleGenerate}
+3029:                    )}
+3032:                      <DetailedLoading message={loadingMessage} progress={loadingProgress} />
+3036:                        {generationMode === 'img2img' ? 'Transform Image' : 'Generate Masterpiece'}
+3038:                    )}
+3041:                    {generations.length} / {maxGenerations} Generations Used
+3043:                      <span className="text-amber-500 ml-2 cursor-pointer hover:underline" onClick={() => setShowUpgradeModal(true)}>
+3046:                    )}
+3050:                {/* Preview Section */}
+3054:                      initial={{ opacity: 0, y: 20 }}
+3055:                      animate={{ opacity: 1, y: 0 }}
+3056:                      exit={{ opacity: 0, y: -20 }}
+3066:                            onClick={() => setPreviewImage(null)}
+3078:                                handleDownloadImage(upscaledUrl, `upscaled-${Date.now()}`);
+3080:                              } catch (err) {
+3083:                              } finally {
+3085:                              }
+3086:                            }}
+3087:                            disabled={isUpscaling}
+3091:                            {isUpscaling ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
+3094:                            onClick={() => handleDownloadImage(previewImage, `preview-${Date.now()}`)}
+3107:                              });
+3109:                            }}
+3120:                          src={previewImage} 
+3128:                          onClick={handleSavePreview}
+3134:                          onClick={handleAddToPortfolio}
+3140:                          onClick={handleGenerate}
+3141:                          disabled={(generationMode === 'text2img' && !prompt) || (generationMode === 'img2img' && !referenceImage) || isGenerating || generations.length + batchSize > maxGenerations}
+3145:                          )}
+3148:                            <DetailedLoading message={loadingMessage} progress={loadingProgress} />
+3151:                          )}
+3155:                  )}
+3158:                {/* Generation History */}
+3167:                        onClick={() => setView('gallery')}
+3177:                          key={gen.id}
+3178:                          whileHover={{ y: -4 }}
+3180:                          onClick={() => setSelectedImage(gen)}
+3184:                              src={gen.imageUrl} 
+3185:                              alt={gen.prompt} 
+3193:                                }}
+3202:                                }}
+3211:                              {new Date(gen.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+3214:                              "{gen.prompt}"
+3218:                      ))}
+3221:                )}
+3224:          )}
+3229:              initial={{ opacity: 0, scale: 0.95 }}
+3230:              animate={{ opacity: 1, scale: 1 }}
+3231:              exit={{ opacity: 0, scale: 0.95 }}
+3238:                    {generations.length} Masterpieces Forged
+3244:                      onClick={() => setGalleryViewMode('grid')}
+3248:                      )}
+3254:                      onClick={() => setGalleryViewMode('history')}
+3258:                      )}
+3265:                    onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} 
+3269:                    )}
+3271:                    <Heart className={cn("w-4 h-4", showFavoritesOnly && "fill-current")} /> 
+3272:                    <span className="hidden sm:inline">{showFavoritesOnly ? "Favorites" : "All"}</span>
+3273:                    <span className="sm:hidden">{showFavoritesOnly ? "Favs" : "All"}</span>
+3275:                  <button onClick={() => setView('generate')} className="bg-[#141414] text-white px-4 sm:px-8 py-3 sm:py-4 rounded-2xl text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-[#141414]/10 hover:scale-[1.02] active:scale-[0.98] transition-all">
+3288:                      key={gen.id}
+3290:                      onClick={() => setSelectedImage(gen)}
+3294:                          src={gen.imageUrl} 
+3295:                          alt={gen.prompt} 
+3302:                              "{gen.prompt}"
+3306:                                {new Date(gen.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+3314:                                  }}
+3324:                                  }}
+3334:                                  }}
+3338:                                  )}
+3340:                                  <Heart className={cn("w-4 h-4", gen.isFavorite && "fill-current")} />
+3347:                                  }}
+3357:                                  }}
+3368:                  ))}
+3375:                      key={gen.id}
+3377:                      onClick={() => setSelectedImage(gen)}
+3380:                        <img src={gen.imageUrl} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover" />
+3386:                        <p className="text-sm font-serif italic line-clamp-2 mb-2">"{gen.prompt}"</p>
+3388:                          <span>{new Date(gen.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+3389:                          {gen.isFavorite && <span className="text-red-500 flex items-center gap-1"><Heart className="w-3 h-3 fill-current" /> Favorite</span>}
+3398:                          }}
+3407:                  ))}
+3409:              )}
+3420:                  <button onClick={() => setView('generate')} className="text-[#141414] font-serif italic border-b border-[#141414] pb-1 hover:opacity-60 transition-opacity">
+3424:              )}
+3436:              )}
+3438:          )}
+3443:              initial={{ opacity: 0, scale: 0.95 }}
+3444:              animate={{ opacity: 1, scale: 1 }}
+3445:              exit={{ opacity: 0, scale: 0.95 }}
+3462:                    }}
+3487:                          initial={{ opacity: 0, y: 20 }}
+3488:                          animate={{ opacity: 1, y: 0 }}
+3489:                          key={post.id} 
+3493:                            src={post.imageUrl} 
+3494:                            alt={post.prompt} 
+3500:                              <p className="text-white font-serif italic text-sm line-clamp-2">"{post.prompt}"</p>
+3503:                                  <img src={post.authorPhoto} alt={post.authorName} className="w-5 h-5 rounded-full border border-white/20" />
+3504:                                  {post.authorName}
+3507:                                  onClick={() => handleLikePost(post.id!)}
+3510:                                  <Heart className="w-3 h-3" /> {post.likesCount || 0}
+3522:                    )}
+3557:          )}
+3562:              messages={chatMessages}
+3563:              input={chatInput}
+3564:              setInput={setChatInput}
+3565:              onSend={() => handleSendMessage()}
+3566:              isChatting={isChatting}
+3567:              isRecording={isRecording}
+3568:              onStartRecording={handleStartRecording}
+3569:              onStopRecording={handleStopRecording}
+3570:              onSpeak={handleSpeakMessage}
+3571:              onSearch={handleSearchGrounding}
+3572:              onMap={handleMapsGrounding}
+3574:          )}
+3579:              prompt={videoPrompt}
+3580:              setPrompt={setVideoPrompt}
+3581:              onGenerate={handleGenerateVideo}
+3582:              isGenerating={isVideoGenerating}
+3583:              videoUrl={generatedVideoUrl}
+3584:              aspectRatio={videoAspectRatio}
+3585:              setAspectRatio={setVideoAspectRatio}
+3587:          )}
+3591:      {/* Lightbox */}
+3595:            initial={{ opacity: 0 }}
+3596:            animate={{ opacity: 1 }}
+3597:            exit={{ opacity: 0 }}
+3605:            }}
+3608:                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+3609:                animate={{ scale: 1, opacity: 1, y: 0 }}
+3610:                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+3614:                )}
+3615:                onClick={(e) => e.stopPropagation()}
+3624:                      <button onClick={() => setIsSelectingCompare(false)} className="p-2 hover:bg-[#141414]/5 rounded-full transition-colors">
+3634:                              key={gen.id}
+3635:                              whileHover={{ y: -4 }}
+3640:                              }}
+3643:                                <img src={gen.imageUrl} alt={gen.prompt} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+3650:                                  {new Date(gen.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+3654:                          ))}
+3662:                    <button onClick={() => setCompareImage(null)} className="p-2 hover:bg-[#141414]/5 rounded-full transition-colors">
+3669:                        initialScale={1}
+3670:                        minScale={0.5}
+3671:                        maxScale={4}
+3673:                        wheel={{ step: 0.1 }}
+3675:                        {({ zoomIn, zoomOut, resetTransform }) => (
+3679:                                onClick={() => zoomIn()}
+3686:                                onClick={() => zoomOut()}
+3693:                                onClick={() => resetTransform()}
+3702:                                {/* Previous Image (Base) */}
+3704:                                  src={compareImage.imageUrl} 
+3705:                                  alt={compareImage.prompt} 
+3707:                                  style={{ opacity: 1 - (compareSliderValue / 100) }}
+3709:                                {/* Current Image (Overlay) */}
+3711:                                  src={selectedImage.imageUrl} 
+3712:                                  alt={selectedImage.prompt} 
+3714:                                  style={{ opacity: compareSliderValue / 100 }}
+3719:                        )}
+3722:                      {/* Slider Control */}
+3726:                          <span>{compareSliderValue}% Current</span>
+3733:                          value={compareSliderValue} 
+3734:                          onChange={(e) => setCompareSliderValue(Number(e.target.value))}
+3740:                    {/* Details Sidebar */}
+3745:                          <p className="text-sm italic line-clamp-4">"{selectedImage.prompt}"</p>
+3752:                            <p className="text-xs font-medium">{new Date(compareImage.createdAt).toLocaleDateString()}</p>
+3754:                              onClick={() => handleDownloadImage(compareImage.imageUrl, compareImage.id!)}
+3766:                            <p className="text-xs font-medium">{new Date(selectedImage.createdAt).toLocaleDateString()}</p>
+3768:                              onClick={() => handleDownloadImage(selectedImage.imageUrl, selectedImage.id!)}
+3784:                      initialScale={1}
+3785:                      minScale={0.5}
+3786:                      maxScale={4}
+3788:                      wheel={{ step: 0.1 }}
+3790:                      {({ zoomIn, zoomOut, resetTransform }) => (
+3794:                              onClick={() => zoomIn()}
+3801:                              onClick={() => zoomOut()}
+3808:                              onClick={() => resetTransform()}
+3816:                            <img src={selectedImage.imageUrl} alt={selectedImage.prompt} className="max-w-full max-h-[80vh] object-contain cursor-grab active:cursor-grabbing" />
+3819:                      )}
+3825:                    )}
+3832:                      }}
+3847:                        }} className="p-2 hover:bg-[#141414]/5 rounded-full transition-colors hidden md:block">
+3855:                              value={editedPrompt}
+3856:                              onChange={(e) => setEditedPrompt(e.target.value)}
+3862:                                onClick={() => handleRegenerateFromGallery(selectedImage)}
+3863:                                disabled={isGenerating || (selectedImage.generationMode === 'text2img' && !editedPrompt.trim())}
+3866:                                {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+3870:                                onClick={() => setIsEditingPrompt(false)}
+3879:                            <h4 className="text-3xl font-serif italic leading-tight">"{selectedImage.prompt}"</h4>
+3884:                              }}
+3890:                        )}
+3892:                          Forged on {new Date(selectedImage.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+3898:                          {styleProfile?.fullProfile}
+3904:                              <span className="px-2 py-1 bg-[#141414]/5 rounded-md font-bold uppercase tracking-widest text-[10px]">{selectedImage.textEffect.type}</span>
+3906:                                <div className="w-3 h-3 rounded-full border border-[#141414]/10" style={{ backgroundColor: selectedImage.textEffect.color }}></div>
+3907:                                <span className="font-mono">{selectedImage.textEffect.color}</span>
+3909:                              <span>{selectedImage.textEffect.intensity}% Intensity</span>
+3912:                        )}
+3918:                          onClick={() => setIsSelectingCompare(true)}
+3923:                      )}
+3925:                        onClick={() => handleUpscaleImage(selectedImage)}
+3926:                        disabled={isUpscaling}
+3929:                        {isUpscaling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />} 
+3930:                        {isUpscaling ? 'Upscaling...' : 'Upscale Image (4K)'}
+3938:                          }}
+3944:                          onClick={() => handleDownloadImage(selectedImage.imageUrl, selectedImage.id!)}
+3953:                          }}
+3961:                          onClick={() => handleShareToCommunity(selectedImage)}
+3969:                          }}
+3973:                          )}
+3975:                          <Heart className={cn("w-5 h-5", selectedImage.isFavorite && "fill-current")} />
+3980:                          }}
+3989:              )}
+3992:        )}
+3995:      {/* Mobile FAB */}
+3999:            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+4000:            animate={{ opacity: 1, scale: 1, y: 0 }}
+4001:            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+4002:            whileTap={{ scale: 0.95 }}
+4003:            onClick={() => setView('generate')}
+4008:        )}
+4011:            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+4012:            animate={{ opacity: 1, scale: 1, y: 0 }}
+4013:            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+4014:            whileTap={{ scale: 0.95 }}
+4015:            onClick={() => setView('generate')}
+4020:        )}
+4023:      <footer className={cn("border-t border-[#141414]/10 py-12 pb-32 sm:pb-12 mt-24 transition-all duration-500", isModalOpen && "blur-sm opacity-60 pointer-events-none")}>
+4028:                src={siteLogo || "/logo.png"} 
+4035:                }}
+4043:            <button onClick={() => setShowFeedbackModal(true)} className="hover:text-[#141414] flex items-center gap-1"><MessageCircle className="w-3 h-3" /> Suggest a Feature</button>
+4044:            <button onClick={() => { setPolicyTab('terms'); setShowPolicies(true); }} className="hover:text-[#141414]">Terms</button>
+4045:            <button onClick={() => { setPolicyTab('privacy'); setShowPolicies(true); }} className="hover:text-[#141414]">Privacy</button>
+4051:      {/* Profile Modal */}
+4056:              initial={{ opacity: 0 }}
+4057:              animate={{ opacity: 1 }}
+4058:              exit={{ opacity: 0 }}
+4059:              onClick={() => setShowProfileModal(false)}
+4063:              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+4064:              animate={{ opacity: 1, scale: 1, y: 0 }}
+4065:              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+4070:                <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-[#141414]/5 rounded-full transition-colors">
+4079:                      src={editPhotoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`} 
+4091:                      value={editDisplayName}
+4092:                      onChange={(e) => setEditDisplayName(e.target.value)}
+4101:                      value={editPhotoURL}
+4102:                      onChange={(e) => setEditPhotoURL(e.target.value)}
+4113:                        {isUploadingLogo && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
+4119:                          onChange={handleLogoUpload}
+4121:                          disabled={isUploadingLogo}
+4130:                          <img src={siteLogo} alt="Current Logo" className="h-8 w-auto object-contain" />
+4133:                      )}
+4135:                  )}
+4141:                  onClick={() => setShowProfileModal(false)}
+4147:                  onClick={handleSaveProfile}
+4148:                  disabled={!editDisplayName.trim() || isSavingProfile}
+4151:                  {isSavingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+4157:        )}
+4160:      {/* Save Template Modal */}
+4165:              initial={{ opacity: 0 }}
+4166:              animate={{ opacity: 1 }}
+4167:              exit={{ opacity: 0 }}
+4168:              onClick={() => setShowTemplateModal(false)}
+4172:              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+4173:              animate={{ opacity: 1, scale: 1, y: 0 }}
+4174:              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+4179:                <button onClick={() => setShowTemplateModal(false)} className="p-2 hover:bg-[#141414]/5 rounded-full transition-colors">
+4189:                    value={templateName}
+4190:                    onChange={(e) => setTemplateName(e.target.value)}
+4199:                    {prompt}
+4206:                  onClick={() => setShowTemplateModal(false)}
+4212:                  onClick={handleSaveTemplate}
+4213:                  disabled={!templateName || isSavingTemplate}
+4216:                  {isSavingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+4222:        )}
+4225:      {/* Template Library Modal */}
+4230:              initial={{ opacity: 0 }}
+4231:              animate={{ opacity: 1 }}
+4232:              exit={{ opacity: 0 }}
+4233:              onClick={() => setShowTemplateLibrary(false)}
+4237:              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+4238:              animate={{ opacity: 1, scale: 1, y: 0 }}
+4239:              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+4247:                <button onClick={() => setShowTemplateLibrary(false)} className="p-3 hover:bg-[#141414]/5 rounded-full transition-colors">
+4264:                        key={t.id} 
+4270:                        )}
+4273:                          setToast(`Loaded: ${t.name}`);
+4275:                        }}
+4278:                          <h5 className="font-bold text-sm truncate pr-8">{t.name}</h5>
+4283:                            }}
+4289:                            )}
+4297:                        )}>
+4298:                          "{t.content}"
+4304:                          )}>
+4305:                            {new Date(t.createdAt).toLocaleDateString()}
+4309:                          )}
+4312:                    ))}
+4314:                )}
+4318:        )}
+4321:      {/* Upgrade Modal */}
+4326:              initial={{ opacity: 0 }}
+4327:              animate={{ opacity: 1 }}
+4328:              exit={{ opacity: 0 }}
+4329:              onClick={() => setShowUpgradeModal(false)}
+4333:              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+4334:              animate={{ opacity: 1, scale: 1, y: 0 }}
+4335:              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+4339:                onClick={() => setShowUpgradeModal(false)}
+4375:                    onClick={() => { setIsPro(true); setShowUpgradeModal(false); setToast("Welcome to Pro!"); }}
+4385:                    onClick={() => { setIsPro(true); setShowUpgradeModal(false); setToast("Welcome to Pro!"); }}
+4404:                  onClick={() => { setIsPro(true); setShowUpgradeModal(false); setToast("Welcome to Pro for Life!"); }}
+4416:        )}
+4419:      {/* Feedback Modal */}
+4424:              initial={{ opacity: 0 }}
+4425:              animate={{ opacity: 1 }}
+4426:              exit={{ opacity: 0 }}
+4427:              onClick={() => setShowFeedbackModal(false)}
+4431:              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+4432:              animate={{ opacity: 1, scale: 1, y: 0 }}
+4433:              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+4437:                onClick={() => setShowFeedbackModal(false)}
+4452:                value={feedbackText}
+4453:                onChange={(e) => setFeedbackText(e.target.value)}
+4463:                }}
+4464:                disabled={!feedbackText.trim()}
+4471:        )}
+4474:      {/* Share Modal */}
+4479:              initial={{ opacity: 0 }}
+4480:              animate={{ opacity: 1 }}
+4481:              exit={{ opacity: 0 }}
+4482:              onClick={() => setShowShareModal(false)}
+4486:              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+4487:              animate={{ opacity: 1, scale: 1, y: 0 }}
+4488:              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+4498:                    onClick={() => setShowShareModal(false)}
+4506:                  <img src={shareImage.imageUrl} alt="To Share" className="w-full h-full object-cover" />
+4516:                        value={shareImage.imageUrl}
+4523:                        }}
+4533:                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out this AI masterpiece I forged with Forge! #AIArt #ForgeAI`)}&url=${encodeURIComponent(shareImage.imageUrl)}`}
+4541:                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareImage.imageUrl)}`}
+4549:                      href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareImage.imageUrl)}&media=${encodeURIComponent(shareImage.imageUrl)}&description=${encodeURIComponent(shareImage.prompt)}`}
+4561:        )}
+4567:            isOpen={showPolicies} 
+4568:            onClose={() => setShowPolicies(false)} 
+4569:            initialTab={policyTab}
+4571:        )}
+4574:      {/* Mobile Bottom Navigation */}
+4577:          <MobileNavButton active={view === 'upload'} onClick={() => setView('upload')} icon={<Upload className="w-5 h-5" />} label="Train" />
+4578:          <MobileNavButton active={view === 'generate'} onClick={() => setView('generate')} icon={<Sparkles className="w-5 h-5" />} label="Forge" disabled={!styleProfile} />
+4579:          <MobileNavButton active={view === 'gallery'} onClick={() => setView('gallery')} icon={<Grid className="w-5 h-5" />} label="Gallery" />
+4580:          <MobileNavButton active={view === 'community'} onClick={() => setView('community')} icon={<Users className="w-5 h-5" />} label="Community" />
+4581:          <MobileNavButton active={view === 'chat'} onClick={() => setView('chat')} icon={<MessageCircle className="w-5 h-5" />} label="Mentor" />
+4582:          <MobileNavButton active={view === 'video'} onClick={() => setView('video')} icon={<Video className="w-5 h-5" />} label="Veo" />
+4587:}
+4589:function MobileNavButton({ active, onClick, icon, label, disabled = false }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, disabled?: boolean }) {
+4592:      disabled={disabled}
+4593:      onClick={onClick}
+4598:      )}
+4600:      {icon}
+4601:      <span className="text-[9px] font-bold uppercase tracking-widest">{label}</span>
+4604:}
+4606:function NavButton({ active, onClick, icon, label, disabled = false }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, disabled?: boolean }) {
+4609:      disabled={disabled}
+4610:      onClick={onClick}
+4615:      )}
+4617:      {icon}
+4618:      {label}
+4621:}
+4635:}: { 
+4647:}) {
+4653:    }
+4654:  }, [messages]);
+4658:      initial={{ opacity: 0, y: 20 }}
+4659:      animate={{ opacity: 1, y: 0 }}
+4660:      exit={{ opacity: 0, y: -20 }}
+4675:            <button onClick={() => onSearch(input)} className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors">
+4680:            <button onClick={() => onMap(input)} className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-lg transition-colors">
+4687:      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
+4693:        )}
+4695:          <div key={m.id} className={cn("flex", m.role === 'user' ? "justify-end" : "justify-start")}>
+4699:            )}>
+4701:                <ReactMarkdown>{m.content}</ReactMarkdown>
+4708:                      <a key={i} href={s.uri} target="_blank" rel="noreferrer" className="text-[8px] bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded-full transition-colors truncate max-w-[150px]">
+4709:                        {s.title || s.uri}
+4711:                    ))}
+4714:              )}
+4716:                <span className="text-[8px] opacity-40">{new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+4718:                  <button onClick={() => onSpeak(m.content)} className="p-1 hover:bg-white/10 rounded-md transition-colors">
+4721:                )}
+4725:        ))}
+4733:        )}
+4739:            onMouseDown={onStartRecording}
+4740:            onMouseUp={onStopRecording}
+4744:            )}
+4750:            value={input}
+4751:            onChange={(e) => setInput(e.target.value)}
+4752:            onKeyDown={(e) => e.key === 'Enter' && onSend()}
+4757:            onClick={onSend}
+4758:            disabled={!input.trim() || isChatting}
+4767:}
+4777:}: { 
+4785:}) {
+4788:      initial={{ opacity: 0, x: 20 }}
+4789:      animate={{ opacity: 1, x: 0 }}
+4790:      exit={{ opacity: 0, x: -20 }}
+4806:                value={prompt}
+4807:                onChange={(e) => setPrompt(e.target.value)}
+4817:                  onClick={() => setAspectRatio('16:9')}
+4821:                  )}
+4826:                  onClick={() => setAspectRatio('9:16')}
+4830:                  )}
+4838:              onClick={onGenerate}
+4839:              disabled={!prompt.trim() || isGenerating}
+4842:              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
+4843:              {isGenerating ? "Generating..." : "Generate Video"}
+4852:          )}>
+4855:                src={videoUrl} 
+4866:            )}
+4879:                        animate={{ x: ["-100%", "100%"] }}
+4880:                        transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+4886:            )}
+4892:}

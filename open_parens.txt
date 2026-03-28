@@ -1,0 +1,1263 @@
+64:function cn(...inputs: ClassValue[]) {
+65:  return twMerge(clsx(inputs));
+68:const Tooltip = ({ text, children }: { text: string, children: React.ReactNode }) => {
+69:  const [show, setShow] = useState(false);
+70:  return (
+71:    <div className="relative inline-block" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+74:        {show && (
+99:const DetailedLoading = ({ message, progress, dark = false }: { message: string, progress: number, dark?: boolean }) => (
+103:        <Loader2 className={cn("w-3 h-3 animate-spin flex-shrink-0", dark ? "text-white/40" : "text-[#141414]/40")} />
+104:        <span className={cn("text-[10px] font-bold uppercase tracking-widest truncate", dark ? "text-white/60" : "text-[#141414]/60")}>
+108:      <span className={cn("text-[10px] font-mono font-bold flex-shrink-0", dark ? "text-white" : "text-[#141414]")}>
+109:        {Math.round(progress)}%
+112:    <div className={cn("h-1 rounded-full overflow-hidden", dark ? "bg-white/10" : "bg-[#141414]/5")}>
+114:        className={cn("h-full", dark ? "bg-white" : "bg-[#141414]")}
+123:export default function App() {
+124:  const [user, setUser] = useState<FirebaseUser | DemoUser | null>(null);
+125:  const [isDemoMode, setIsDemoMode] = useState(false);
+126:  const [showOnboarding, setShowOnboarding] = useState(false);
+127:  const [artworks, setArtworks] = useState<ArtWork[]>([]);
+128:  const [generations, setGenerations] = useState<GeneratedImage[]>([]);
+129:  const [loading, setLoading] = useState(true);
+130:  const [isAnalyzing, setIsAnalyzing] = useState(false);
+131:  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+132:  const [isEvaluating, setIsEvaluating] = useState(false);
+133:  const [evaluationProgress, setEvaluationProgress] = useState(0);
+140:  } | null>(null);
+142:  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+143:  const [showProfileModal, setShowProfileModal] = useState(false);
+144:  const [editDisplayName, setEditDisplayName] = useState('');
+145:  const [editPhotoURL, setEditPhotoURL] = useState('');
+146:  const [isSavingProfile, setIsSavingProfile] = useState(false);
+148:  const [promptTemplates, setPromptTemplates] = useState<PromptTemplate[]>([]);
+149:  const [showTemplateModal, setShowTemplateModal] = useState(false);
+150:  const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
+151:  const [templateName, setTemplateName] = useState('');
+152:  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+153:  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+155:  const [hasApiKey, setHasApiKey] = useState<boolean>(true);
+156:  const [isCheckingApiKey, setIsCheckingApiKey] = useState<boolean>(true);
+159:  useEffect(() => {
+160:    const checkApiKey = async () => {
+163:        if (window.aistudio && window.aistudio.hasSelectedApiKey) {
+165:          const hasKey = await window.aistudio.hasSelectedApiKey();
+166:          setHasApiKey(hasKey);
+168:      } catch (e) {
+169:        console.error("Error checking API key:", e);
+171:        setIsCheckingApiKey(false);
+174:    checkApiKey();
+177:  const handleSelectApiKey = async () => {
+180:      if (window.aistudio && window.aistudio.openSelectKey) {
+182:        await window.aistudio.openSelectKey();
+183:        setHasApiKey(true);
+185:    } catch (e) {
+186:      console.error("Error selecting API key:", e);
+189:  const [isGenerating, setIsGenerating] = useState(false);
+190:  const [isUpscaling, setIsUpscaling] = useState(false);
+191:  const [loadingMessage, setLoadingMessage] = useState<string>('');
+192:  const [loadingProgress, setLoadingProgress] = useState<number>(0);
+193:  const [showShareModal, setShowShareModal] = useState(false);
+194:  const [shareImage, setShareImage] = useState<GeneratedImage | null>(null);
+195:  const [showPolicies, setShowPolicies] = useState(false);
+196:  const [policyTab, setPolicyTab] = useState<'terms' | 'privacy'>('terms');
+197:  const [generationMode, setGenerationMode] = useState<'text2img' | 'img2img'>('text2img');
+198:  const [prompt, setPrompt] = useState('');
+199:  const [aspectRatio, setAspectRatio] = useState('1:1');
+200:  const [styleStrength, setStyleStrength] = useState(75);
+201:  const [referenceImageStrength, setReferenceImageStrength] = useState(50);
+202:  const [negativePrompt, setNegativePrompt] = useState('');
+203:  const [imageSize, setImageSize] = useState<"512px" | "1K" | "2K" | "4K">("1K");
+204:  const [batchSize, setBatchSize] = useState(1);
+205:  const [seed, setSeed] = useState<number | undefined>(undefined);
+206:  const [saveQuality, setSaveQuality] = useState(80);
+207:  const [textEffectType, setTextEffectType] = useState<'None' | 'Outline' | 'Shadow' | 'Glow'>('None');
+208:  const [textEffectColor, setTextEffectColor] = useState('#000000');
+209:  const [textEffectIntensity, setTextEffectIntensity] = useState(50);
+210:  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+211:  const [galleryViewMode, setGalleryViewMode] = useState<'grid' | 'history'>('grid');
+212:  const [elementWeights, setElementWeights] = useState<ElementWeight[]>([]);
+213:  const [selectedPresetId, setSelectedPresetId] = useState('none');
+214:  const [recentPresetIds, setRecentPresetIds] = useState<string[]>([]);
+215:  const [activeStyleCategory, setActiveStyleCategory] = useState<string>('All');
+216:  const [showAdvanced, setShowAdvanced] = useState(false);
+217:  const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
+218:  const [compareImage, setCompareImage] = useState<GeneratedImage | null>(null);
+219:  const [compareSliderValue, setCompareSliderValue] = useState(50);
+220:  const [previewImage, setPreviewImage] = useState<string | null>(null);
+221:  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+222:  const [view, setView] = useState<'upload' | 'generate' | 'gallery' | 'community' | 'chat' | 'video'>('upload');
+223:  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+224:  const [chatInput, setChatInput] = useState('');
+225:  const [isChatting, setIsChatting] = useState(false);
+226:  const [isRecording, setIsRecording] = useState(false);
+227:  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+228:  const [isVideoGenerating, setIsVideoGenerating] = useState(false);
+229:  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
+230:  const [videoPrompt, setVideoPrompt] = useState('');
+231:  const [videoAspectRatio, setVideoAspectRatio] = useState<'16:9' | '9:16'>('16:9');
+232:  const [groundingResults, setGroundingResults] = useState<{ text: string, sources: any[] } | null>(null);
+233:  const [isSearching, setIsSearching] = useState(false);
+234:  const [isMapping, setIsMapping] = useState(false);
+235:  const [error, setError] = useState<string | null>(null);
+236:  const [toast, setToast] = useState<string | null>(null);
+237:  const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
+238:  const [uploadTasks, setUploadTasks] = useState<UploadTask[]>([]);
+239:  const [isPro, setIsPro] = useState(false);
+240:  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+241:  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+242:  const [feedbackText, setFeedbackText] = useState('');
+243:  const [isEditingPrompt, setIsEditingPrompt] = useState(false);
+244:  const [editedPrompt, setEditedPrompt] = useState('');
+245:  const [isSelectingCompare, setIsSelectingCompare] = useState(false);
+246:  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
+247:  const [siteLogo, setSiteLogo] = useState<string | null>(null);
+248:  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+253:  const filteredGenerations = React.useMemo(() => {
+254:    return generations.filter(gen => showFavoritesOnly ? gen.isFavorite : true);
+257:  const [authError, setAuthError] = useState<{ error: string, details: string, redirectUri?: string } | null>(null);
+259:  useEffect(() => {
+260:    let unsubscribeListeners: (() => void) | null = null;
+262:    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+263:      setUser(firebaseUser);
+264:      if (firebaseUser) {
+267:          const userRef = doc(db, 'users', firebaseUser.uid);
+268:          const userDoc = await getDoc(userRef);
+270:          if (!userDoc.exists()) {
+271:            await setDoc(userRef, {
+279:              createdAt: new Date().toISOString()
+281:            setRecentPresetIds([]);
+282:            setShowOnboarding(true); // Show onboarding for new users
+284:            const userData = userDoc.data();
+285:            setRecentPresetIds(userData.recentPresetIds || []);
+289:          unsubscribeListeners = setupListeners(firebaseUser.uid);
+290:        } catch (error) {
+291:          handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
+294:        setArtworks([]);
+295:        setGenerations([]);
+296:        if (unsubscribeListeners) {
+297:          unsubscribeListeners();
+301:      setLoading(false);
+304:    return () => {
+305:      unsubscribeAuth();
+306:      if (unsubscribeListeners) unsubscribeListeners();
+310:  const setupListeners = (userId: string) => {
+312:    const userRef = doc(db, 'users', userId);
+313:    const unsubscribeUser = onSnapshot(userRef, (docSnap) => {
+314:      if (docSnap.exists()) {
+315:        setUserProfile(docSnap.data() as UserProfile);
+317:    }, (err) => handleFirestoreError(err, OperationType.GET, `users/${userId}`));
+320:    const artworksQuery = query(collection(db, 'users', userId, 'artworks'), orderBy('createdAt', 'desc'), limit(50));
+321:    const unsubscribeArtworks = onSnapshot(artworksQuery, (snapshot) => {
+322:      const items = snapshot.docs.map(doc => doc.data() as ArtWork);
+323:      setArtworks(items);
+324:    }, (err) => handleFirestoreError(err, OperationType.LIST, `users/${userId}/artworks`));
+327:    const generationsQuery = query(collection(db, 'users', userId, 'generations'), orderBy('createdAt', 'desc'), limit(100));
+328:    const unsubscribeGenerations = onSnapshot(generationsQuery, (snapshot) => {
+329:      const items = snapshot.docs.map(doc => doc.data() as GeneratedImage);
+330:      setGenerations(items);
+331:    }, (err) => handleFirestoreError(err, OperationType.LIST, `users/${userId}/generations`));
+333:    return () => {
+334:      unsubscribeUser();
+335:      unsubscribeArtworks();
+336:      unsubscribeGenerations();
+340:  const handleSaveProfile = async () => {
+341:    if (!user || !editDisplayName.trim()) return;
+343:    if (isDemoMode) {
+344:      setToast("Profile editing is disabled in Demo Mode.");
+345:      setShowProfileModal(false);
+349:    setIsSavingProfile(true);
+351:      const userRef = doc(db, 'users', user.uid);
+352:      await updateDoc(userRef, {
+353:        displayName: editDisplayName.trim(),
+354:        photoURL: editPhotoURL.trim()
+356:      setToast("Profile updated successfully!");
+357:      setShowProfileModal(false);
+358:    } catch (error: any) {
+359:      handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
+361:      setIsSavingProfile(false);
+365:  const updateRecentPresets = async (presetId: string) => {
+366:    if (presetId === 'none' || !user) return;
+368:    const newRecent = [presetId, ...recentPresetIds.filter(id => id !== presetId)].slice(0, 5);
+369:    setRecentPresetIds(newRecent);
+372:      const userRef = doc(db, 'users', user.uid);
+373:      await updateDoc(userRef, { recentPresetIds: newRecent });
+374:    } catch (err) {
+375:      console.error("Error updating recent presets:", err);
+379:  const handleLogin = async () => {
+381:      setAuthError(null);
+382:      await loginWithGoogle();
+383:      setToast("Signed in successfully!");
+384:    } catch (err: any) {
+385:      console.error("Login error:", err);
+386:      setAuthError({ 
+393:  useEffect(() => {
+394:    if (user && !isDemoMode) {
+395:      const templatesRef = collection(db, 'users', user.uid, 'templates');
+396:      const q = query(templatesRef, orderBy('createdAt', 'desc'), limit(50));
+398:      const unsubscribe = onSnapshot(q, (snapshot) => {
+399:        const templatesData = snapshot.docs.map(doc => ({
+400:          ...doc.data(),
+403:        setPromptTemplates(templatesData);
+404:      }, (error) => {
+405:        handleFirestoreError(error, OperationType.LIST, 'templates');
+408:      return () => unsubscribe();
+412:  useEffect(() => {
+413:    const postsRef = collection(db, 'community_posts');
+414:    const q = query(postsRef, orderBy('createdAt', 'desc'), limit(50));
+416:    const unsubscribe = onSnapshot(q, (snapshot) => {
+417:      const postsData = snapshot.docs.map(doc => ({
+418:        ...doc.data(),
+421:      setCommunityPosts(postsData);
+422:    }, (error) => {
+423:      handleFirestoreError(error, OperationType.LIST, 'community_posts');
+426:    return () => unsubscribe();
+429:  useEffect(() => {
+430:    const configRef = doc(db, 'config', 'site');
+431:    const unsubscribe = onSnapshot(configRef, (docSnap) => {
+432:      if (docSnap.exists()) {
+433:        setSiteLogo(docSnap.data().logoUrl);
+435:    }, (error) => {
+436:      handleFirestoreError(error, OperationType.GET, 'config/site');
+438:    return () => unsubscribe();
+441:  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+442:    if (!e.target.files || !e.target.files[0] || !user || user.email !== 'actoftod@gmail.com') return;
+444:    setIsUploadingLogo(true);
+446:      const fileRef = ref(storage, 'site/logo.png');
+447:      await uploadBytes(fileRef, file);
+448:      const downloadUrl = await getDownloadURL(fileRef);
+450:      await setDoc(doc(db, 'config', 'site'), {
+452:        updatedAt: new Date().toISOString()
+455:      setToast("Site logo updated successfully!");
+456:    } catch (err) {
+457:      console.error("Logo upload error:", err);
+458:      setToast("Failed to upload logo.");
+460:      setIsUploadingLogo(false);
+464:  const handleSendMessage = async (text?: string) => {
+466:    if (!messageText.trim() || !user) return;
+469:      id: Date.now().toString(),
+472:      timestamp: new Date().toISOString()
+475:    setChatMessages(prev => [...prev, newUserMessage]);
+476:    setChatInput('');
+477:    setIsChatting(true);
+480:      const history = chatMessages.map(m => ({
+489:      const response = await chatWithAI(messageText, history, systemInstruction);
+492:        id: (Date.now() + 1).toString(),
+495:        timestamp: new Date().toISOString()
+498:      setChatMessages(prev => [...prev, newAiMessage]);
+499:    } catch (err) {
+500:      console.error("Chat error:", err);
+501:      setToast("Failed to get response from AI Art Mentor.");
+503:      setIsChatting(false);
+507:  const handleStartRecording = async () => {
+509:      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+510:      const recorder = new MediaRecorder(stream);
+513:      recorder.ondataavailable = (e) => chunks.push(e.data);
+514:      recorder.onstop = async () => {
+515:        const blob = new Blob(chunks, { type: 'audio/webm' });
+516:        const reader = new FileReader();
+517:        reader.onloadend = async () => {
+518:          const base64 = (reader.result as string).split(',')[1];
+519:          setToast("Transcribing your voice...");
+521:            const transcription = await transcribeAudio(base64, 'audio/webm');
+522:            setChatInput(transcription);
+523:            setToast("Voice transcribed!");
+524:          } catch (err) {
+525:            console.error("Transcription error:", err);
+526:            setToast("Failed to transcribe audio.");
+529:        reader.readAsDataURL(blob);
+532:      recorder.start();
+533:      setMediaRecorder(recorder);
+534:      setIsRecording(true);
+535:    } catch (err) {
+536:      console.error("Mic access error:", err);
+537:      setToast("Could not access microphone.");
+541:  const handleStopRecording = () => {
+542:    if (mediaRecorder) {
+543:      mediaRecorder.stop();
+544:      setIsRecording(false);
+545:      setMediaRecorder(null);
+549:  const handleSpeakMessage = async (text: string) => {
+551:      setToast("Generating speech...");
+552:      const audioUrl = await textToSpeech(text);
+553:      const audio = new Audio(audioUrl);
+554:      audio.play();
+555:    } catch (err) {
+556:      console.error("TTS error:", err);
+557:      setToast("Failed to generate speech.");
+561:  const handleGenerateVideo = async () => {
+562:    if (!videoPrompt.trim() || !user) return;
+563:    setIsVideoGenerating(true);
+564:    setToast("Generating video with Veo... This may take a minute.");
+566:      const videoUrl = await generateVideo(videoPrompt, undefined, videoAspectRatio);
+567:      setGeneratedVideoUrl(videoUrl);
+568:      setToast("Video generated successfully!");
+569:    } catch (err) {
+570:      console.error("Video generation error:", err);
+571:      setToast("Failed to generate video.");
+573:      setIsVideoGenerating(false);
+577:  const handleSearchGrounding = async (query: string) => {
+578:    setIsSearching(true);
+580:      const results = await searchGrounding(query);
+581:      setGroundingResults(results);
+582:      setChatMessages(prev => [...prev, {
+583:        id: Date.now().toString(),
+586:        timestamp: new Date().toISOString(),
+589:    } catch (err) {
+590:      console.error("Search error:", err);
+591:      setToast("Failed to search for information.");
+593:      setIsSearching(false);
+597:  const handleMapsGrounding = async (query: string) => {
+598:    setIsMapping(true);
+603:        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+604:          navigator.geolocation.getCurrentPosition(resolve, reject);
+607:      } catch (e) {
+608:        console.warn("Location access denied, using general search.");
+611:      const results = await mapsGrounding(query, location);
+612:      setGroundingResults(results);
+613:      setChatMessages(prev => [...prev, {
+614:        id: Date.now().toString(),
+617:        timestamp: new Date().toISOString(),
+620:    } catch (err) {
+621:      console.error("Maps error:", err);
+622:      setToast("Failed to find location information.");
+624:      setIsMapping(false);
+627:    if (!user || !prompt || !templateName) return;
+628:    setIsSavingTemplate(true);
+630:      if (isDemoMode) {
+632:          id: `demo_template_${Date.now()}`,
+636:          createdAt: new Date().toISOString()
+638:        setPromptTemplates(prev => [newTemplate, ...prev]);
+639:        setToast("Template saved (Demo Mode)");
+641:        const templateRef = doc(collection(db, 'users', user.uid, 'templates'));
+642:        await setDoc(templateRef, {
+647:          createdAt: new Date().toISOString()
+649:        setToast("Prompt template saved!");
+651:      setShowTemplateModal(false);
+652:      setTemplateName('');
+653:    } catch (err: any) {
+654:      console.error("Save template error:", err);
+655:      setToast("Failed to save template.");
+657:      setIsSavingTemplate(false);
+661:  const handleDeleteTemplate = async (id: string) => {
+662:    if (!user) return;
+664:      if (isDemoMode) {
+665:        setPromptTemplates(prev => prev.filter(t => t.id !== id));
+666:        setToast("Template deleted (Demo Mode)");
+668:        await deleteDoc(doc(db, 'users', user.uid, 'templates', id));
+669:        setToast("Template deleted!");
+671:    } catch (err: any) {
+672:      console.error("Delete template error:", err);
+673:      setToast("Failed to delete template.");
+677:  const handleSignOut = async () => {
+678:    if (isDemoMode) {
+679:      setIsDemoMode(false);
+680:      setUser(null);
+681:      setArtworks([]);
+682:      setGenerations([]);
+683:      setPromptTemplates([]);
+684:      setStyleProfile(null);
+687:    await logout();
+688:    setUser(null);
+689:    setArtworks([]);
+690:    setGenerations([]);
+691:    setPromptTemplates([]);
+692:    setStyleProfile(null);
+693:    setToast("Signed out successfully");
+696:  const handleTryDemo = () => {
+697:    setIsDemoMode(true);
+698:    setUser(DEMO_DATA.user);
+699:    setArtworks(DEMO_DATA.artworks);
+700:    setPromptTemplates(DEMO_DATA.promptTemplates);
+701:    setStyleProfile(DEMO_DATA.styleProfile);
+702:    setShowOnboarding(true);
+705:  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+706:    if (!e.target.files || !user) return;
+708:    if (isDemoMode) {
+709:      setToast("Uploads are disabled in Demo Mode.");
+713:    const files = Array.from(e.target.files) as File[];
+717:    const validFiles = files.filter(file => file.size <= maxSizeInBytes);
+719:    if (validFiles.length < files.length) {
+720:      setToast("Some files were skipped because they exceed the 10MB limit.");
+723:    if (validFiles.length === 0) return;
+725:    if (artworks.length + validFiles.length > maxArtworks) {
+726:      if (!isPro) {
+727:        setShowUpgradeModal(true);
+729:        setToast(`Maximum limit of ${maxArtworks} files reached.`);
+734:    const newTasks: UploadTask[] = validFiles.map(file => ({
+735:      id: Math.random().toString(36).substring(7),
+737:      previewUrl: URL.createObjectURL(file),
+742:    setUploadTasks(prev => [...prev, ...newTasks]);
+744:    for (let i = 0; i < validFiles.length; i++) {
+748:      setUploadTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'uploading', progress: 10 } : t));
+750:      const progressInterval = setInterval(() => {
+751:        setUploadTasks(prev => prev.map(t => {
+752:          if (t.id === task.id && t.status === 'uploading' && t.progress < 90) {
+760:        const base64 = await new Promise<string>((resolve, reject) => {
+761:          const reader = new FileReader();
+762:          reader.onloadend = () => resolve(reader.result as string);
+764:          reader.readAsDataURL(file);
+767:        const compressedBase64 = await compressImage(base64, 1024, 0.8);
+769:        clearInterval(progressInterval);
+772:        const fileRef = ref(storage, `users/${user.uid}/artworks/${task.id}_${file.name}`);
+774:        await uploadString(fileRef, compressedBase64, 'data_url');
+775:        const downloadUrl = await getDownloadURL(fileRef);
+778:        const artworkRef = doc(collection(db, 'users', user.uid, 'artworks'));
+779:        await setDoc(artworkRef, {
+782:          createdAt: new Date().toISOString(),
+786:        setUploadTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'success', progress: 100 } : t));
+787:      } catch (error: any) {
+788:        clearInterval(progressInterval);
+789:        console.error("Upload error:", error);
+790:        setUploadTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'error', error: error.message || "Failed to upload" } : t));
+793:      setTimeout(() => {
+794:        setUploadTasks(prev => prev.filter(t => t.id !== task.id));
+799:  const handleReferenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+800:    if (!e.target.files || !e.target.files[0]) return;
+805:    if (!validTypes.includes(file.type)) {
+806:      setToast("Invalid file type. Please upload a JPEG, PNG, or WebP image.");
+810:    // Validate file size (e.g., max 5MB)
+812:    if (file.size > maxSizeInBytes) {
+813:      setToast("File is too large. Please upload an image smaller than 5MB.");
+817:    const reader = new FileReader();
+818:    reader.onloadend = async () => {
+820:        const compressedBase64 = await compressImage(reader.result as string, 1024, 0.8);
+821:        setReferenceImage(compressedBase64);
+822:        setGenerationMode('img2img');
+823:        setToast("Reference image selected successfully! Switched to Image to Image mode.");
+824:      } catch (err) {
+825:        console.error("Image compression error:", err);
+826:        setToast("Failed to process the image file.");
+829:    reader.onerror = () => {
+830:      setToast("Failed to read the image file.");
+832:    reader.readAsDataURL(file);
+835:  const handleAnalyze = async () => {
+836:    if (!user || artworks.length === 0) return;
+838:    if (isDemoMode) {
+839:      setIsAnalyzing(true);
+840:      setTimeout(() => {
+841:        setStyleProfile(DEMO_DATA.styleProfile);
+842:        setToast("Style profile updated!");
+843:        setView('generate');
+844:        setIsAnalyzing(false);
+849:    setIsAnalyzing(true);
+850:    setLoadingProgress(10);
+851:    setLoadingMessage('Preparing your portfolio for analysis...');
+852:    setError(null);
+855:      setLoadingMessage('Fetching image data...');
+856:      setLoadingProgress(30);
+861:      await Promise.all(artworks.map(async (art) => {
+863:          const { data, mimeType } = await urlToBase64(art.imageUrl);
+864:          imageBase64s.push(`data:${mimeType};base64,${data}`);
+865:        } catch (e) {
+866:          console.warn(`Failed to fetch image ${art.imageUrl}`, e);
+869:          setLoadingProgress(30 + (fetchedCount / artworks.length) * 30);
+873:      if (imageBase64s.length === 0) {
+874:        throw new Error("Failed to load any images for analysis.");
+877:      setLoadingMessage('Extracting unique style features with Gemini...');
+878:      setLoadingProgress(70);
+879:      const profile = await analyzeStyle(imageBase64s);
+880:      setStyleProfile(profile);
+882:      setLoadingMessage('Finalizing your artistic profile...');
+883:      setLoadingProgress(90);
+885:      const userRef = doc(db, 'users', user.uid);
+886:      await updateDoc(userRef, {
+888:        lastAnalyzedAt: new Date().toISOString()
+891:      setLoadingProgress(100);
+892:      setToast("Style profile updated!");
+893:      setView('generate');
+894:    } catch (err: any) {
+895:      console.error("Analysis error:", err);
+896:      setError(err?.message || "Failed to analyze style.");
+898:      setIsAnalyzing(false);
+899:      setLoadingProgress(0);
+903:  const handleEvaluateStyle = async () => {
+904:    if (!user || !styleProfile) return;
+905:    setIsEvaluating(true);
+906:    setEvaluationResults(null);
+907:    setEvaluationProgress(0);
+908:    setError(null);
+918:      for (let i = 0; i < testPrompts.length; i++) {
+919:        setLoadingMessage(`Generating test image ${i + 1}/${testPrompts.length}...`);
+920:        const url = await generateArt(testPrompts[i], styleProfile.fullProfile, "1:1", 75, "", "1K", undefined, "", undefined);
+921:        generatedImages.push(url);
+922:        setEvaluationProgress(((i + 1) / testPrompts.length) * 50);
+925:      setLoadingMessage("Analyzing style consistency...");
+926:      const evaluation = await evaluateStyleConsistency(styleProfile.fullProfile, generatedImages);
+927:      setEvaluationProgress(100);
+929:      setEvaluationResults({
+933:      setToast("Style evaluation complete!");
+934:    } catch (err: any) {
+935:      console.error("Evaluation error:", err);
+936:      setError(err?.message || "Failed to evaluate style.");
+938:      setIsEvaluating(false);
+939:      setLoadingMessage('');
+943:  const handleGenerate = async () => {
+944:    if (!user || !styleProfile) return;
+945:    if (generationMode === 'text2img' && !prompt) return;
+946:    if (generationMode === 'img2img' && !referenceImage) {
+947:      setToast("Please upload a reference image first.");
+951:    if (generations.length + batchSize > maxGenerations) {
+952:      if (!isPro) {
+953:        setShowUpgradeModal(true);
+955:        setToast(`Maximum limit of ${maxGenerations} generations reached.`);
+960:    setIsGenerating(true);
+961:    setLoadingProgress(10);
+962:    setLoadingMessage(batchSize > 1 ? `Preparing to forge a batch of ${batchSize} masterpieces...` : 'Preparing to forge your unique masterpiece...');
+963:    setPreviewImage(null);
+964:    setError(null);
+966:      const preset = STYLE_PRESETS.find(p => p.id === selectedPresetId);
+969:      setLoadingMessage('Applying style adjustments and generating image data...');
+970:      setLoadingProgress(30);
+971:      const promises = Array.from({ length: batchSize }).map(async (_, index) => {
+972:        const url = await generateArt(
+981:          generationMode === 'img2img' ? (referenceImage || undefined) : undefined,
+986:        setLoadingProgress(30 + ((index + 1) / batchSize) * 40);
+990:      const imageUrls = await Promise.all(promises);
+992:      setLoadingMessage('Finalizing and saving to your gallery...');
+993:      setLoadingProgress(80);
+995:      if (batchSize === 1) {
+996:        setPreviewImage(imageUrls[0]);
+997:        setLoadingProgress(100);
+999:        if (isDemoMode) {
+1000:          const newGens: GeneratedImage[] = imageUrls.map((url, i) => ({
+1001:            id: `demo_gen_${Date.now()}_${i}`,
+1012:            createdAt: new Date().toISOString()
+1014:          setGenerations(prev => [...newGens, ...prev]);
+1015:          setLoadingProgress(100);
+1017:          await Promise.all(imageUrls.map(async (url, i) => {
+1018:            const compressedBase64 = await compressImage(url, 1024, saveQuality / 100);
+1021:            const genId = Math.random().toString(36).substring(7);
+1022:            const fileRef = ref(storage, `users/${user.uid}/generations/${genId}.png`);
+1024:            await uploadString(fileRef, compressedBase64, 'data_url');
+1025:            const downloadUrl = await getDownloadURL(fileRef);
+1027:            const generationRef = doc(collection(db, 'users', user.uid, 'generations'));
+1028:            await setDoc(generationRef, {
+1039:              createdAt: new Date().toISOString(),
+1047:            setLoadingProgress(80 + ((i + 1) / batchSize) * 20);
+1050:        setToast(`Generated and saved ${batchSize} images to your gallery!`);
+1051:        setView('gallery');
+1053:    } catch (err: any) {
+1054:      console.error("Generation error:", err);
+1055:      setError(err?.message || "Failed to generate art.");
+1057:      setIsGenerating(false);
+1058:      setLoadingProgress(0);
+1062:  const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false);
+1064:  const handleEnhancePrompt = async () => {
+1065:    if (!prompt) return;
+1066:    setIsEnhancingPrompt(true);
+1068:      const enhanced = await enhancePromptText(prompt);
+1069:      setPrompt(enhanced);
+1070:      setToast("Prompt enhanced!");
+1071:    } catch (err: any) {
+1072:      console.error("Enhance prompt error:", err);
+1073:      setToast("Failed to enhance prompt.");
+1075:      setIsEnhancingPrompt(false);
+1079:  const handleAnalyzeImage = async () => {
+1080:    if (!referenceImage) return;
+1081:    setIsAnalyzingImage(true);
+1082:    setLoadingProgress(20);
+1083:    setLoadingMessage("Analyzing image composition...");
+1084:    setError(null);
+1086:      const description = await analyzeImage(referenceImage);
+1087:      setLoadingProgress(80);
+1088:      setLoadingMessage("Generating prompt from visual data...");
+1089:      setPrompt(description);
+1090:      setLoadingProgress(100);
+1091:      setToast("Image analyzed and prompt generated!");
+1092:    } catch (err: any) {
+1093:      console.error("Image analysis error:", err);
+1094:      setError(err?.message || "Failed to analyze image.");
+1096:      setIsAnalyzingImage(false);
+1097:      setLoadingProgress(0);
+1101:  const handleSavePreview = async () => {
+1102:    if (!user || !previewImage) return;
+1105:    if (isDemoMode) {
+1107:        id: `demo_gen_${Date.now()}`,
+1119:        createdAt: new Date().toISOString()
+1121:      setGenerations(prev => [newGen, ...prev]);
+1122:      setPreviewImage(null);
+1123:      setToast("Saved to Gallery (Demo Mode)");
+1128:      const compressedBase64 = await compressImage(previewImage, 1024, saveQuality / 100);
+1131:      const genId = Math.random().toString(36).substring(7);
+1132:      const fileRef = ref(storage, `users/${user.uid}/generations/${genId}.png`);
+1134:      await uploadString(fileRef, compressedBase64, 'data_url');
+1135:      const downloadUrl = await getDownloadURL(fileRef);
+1138:      const generationRef = doc(collection(db, 'users', user.uid, 'generations'));
+1139:      await setDoc(generationRef, {
+1150:        createdAt: new Date().toISOString(),
+1159:      setToast("Saved to Gallery!");
+1160:      setPreviewImage(null);
+1161:      setView('gallery');
+1162:    } catch (error) {
+1163:      console.error("Save error:", error);
+1164:      setError("Failed to save to Drive");
+1168:  const handleAddToPortfolio = async () => {
+1169:    if (!user || !previewImage) return;
+1171:    if (isDemoMode) {
+1173:        id: `demo_art_${Date.now()}`,
+1176:        createdAt: new Date().toISOString()
+1178:      setArtworks(prev => [newArt, ...prev]);
+1179:      setToast("Added to your style portfolio (Demo Mode)");
+1184:      const compressedBase64 = await compressImage(previewImage, 1024, saveQuality / 100);
+1187:      const fileId = Math.random().toString(36).substring(7);
+1188:      const fileRef = ref(storage, `users/${user.uid}/artworks/portfolio_${fileId}.jpg`);
+1189:      await uploadString(fileRef, compressedBase64, 'data_url');
+1190:      const downloadUrl = await getDownloadURL(fileRef);
+1193:      const artworkRef = doc(collection(db, 'users', user.uid, 'artworks'));
+1194:      await setDoc(artworkRef, {
+1197:        createdAt: new Date().toISOString(),
+1201:      setToast("Added to your style portfolio!");
+1202:    } catch (error) {
+1203:      console.error("Error adding to portfolio:", error);
+1204:      setError("Failed to add to portfolio");
+1208:  const handleToggleFavorite = async (id: string, currentStatus: boolean) => {
+1209:    if (!user) return;
+1211:    if (isDemoMode) {
+1212:      setGenerations(prev => prev.map(g => g.id === id ? { ...g, isFavorite: !currentStatus } : g));
+1213:      if (selectedImage?.id === id) setSelectedImage(prev => prev ? { ...prev, isFavorite: !currentStatus } : null);
+1214:      setToast(currentStatus ? "Removed from favorites" : "Added to favorites");
+1219:      const genRef = doc(db, 'users', user.uid, 'generations', id);
+1220:      await updateDoc(genRef, {
+1224:      if (selectedImage?.id === id) {
+1225:        setSelectedImage(prev => prev ? { ...prev, isFavorite: !currentStatus } : null);
+1227:      setToast(currentStatus ? "Removed from favorites" : "Added to favorites");
+1228:    } catch (err) {
+1229:      console.error("Favorite toggle error:", err);
+1230:      setToast("Failed to update favorite status");
+1234:  const handleDeleteGeneration = async (id: string) => {
+1235:    if (!user) return;
+1237:    if (isDemoMode) {
+1238:      setGenerations(prev => prev.filter(g => g.id !== id));
+1239:      if (selectedImage?.id === id) setSelectedImage(null);
+1240:      setToast("Deleted from Gallery (Demo Mode)");
+1245:      await deleteDoc(doc(db, 'users', user.uid, 'generations', id));
+1247:      if (selectedImage?.id === id) setSelectedImage(null);
+1248:      setToast("Deleted from Gallery");
+1249:    } catch (err) {
+1250:      console.error("Delete error:", err);
+1251:      setToast("Failed to delete image");
+1255:  const handleLikePost = async (postId: string) => {
+1256:    if (!user) {
+1257:      setToast("Please log in to like posts.");
+1260:    if (isDemoMode) {
+1261:      setToast("Liked! (Demo Mode)");
+1265:      const post = communityPosts.find(p => p.id === postId);
+1266:      if (post) {
+1267:        const postRef = doc(db, 'community_posts', postId);
+1268:        await updateDoc(postRef, {
+1269:          likesCount: increment(1)
+1272:    } catch (err) {
+1273:      console.error("Like error:", err);
+1274:      setToast("Failed to like post.");
+1278:  const handleShareToCommunity = async (image: GeneratedImage) => {
+1279:    if (!user || !styleProfile) {
+1280:      setToast("You must be logged in to share to the community.");
+1284:    if (isDemoMode) {
+1285:      setToast("Shared to Community (Demo Mode)");
+1290:    const existingPost = communityPosts.find(p => p.imageUrl === image.imageUrl);
+1291:    if (existingPost) {
+1292:      setToast("Already shared to community!");
+1297:      const postRef = doc(collection(db, 'community_posts'));
+1298:      await setDoc(postRef, {
+1307:        createdAt: new Date().toISOString()
+1309:      setToast("Shared to Community successfully!");
+1310:    } catch (err) {
+1311:      console.error("Share to community error:", err);
+1312:      setToast("Failed to share to community");
+1316:  const handleUpscaleImage = async (image: GeneratedImage) => {
+1317:    if (!user || !styleProfile) return;
+1319:      setIsUpscaling(true);
+1320:      setToast("Upscaling image to 4K... This may take a moment.");
+1322:      const { data, mimeType } = await urlToBase64(image.imageUrl);
+1323:      const upscaledUrl = await upscaleImage(`data:${mimeType};base64,${data}`, image.prompt, image.aspectRatio);
+1326:      handleDownloadImage(upscaledUrl, `${image.id}-4k`);
+1327:      setToast("Image upscaled and downloaded successfully!");
+1328:    } catch (error) {
+1329:      console.error("Upscale error:", error);
+1330:      setToast("Failed to upscale image. Please try again.");
+1332:      setIsUpscaling(false);
+1336:  const handleDownloadImage = async (imageUrl: string, id: string) => {
+1338:      // Try to fetch the image to download as a blob (handles cross-origin better)
+1339:      const response = await fetch(imageUrl);
+1340:      const blob = await response.blob();
+1341:      const url = window.URL.createObjectURL(blob);
+1342:      const link = document.createElement('a');
+1345:      document.body.appendChild(link);
+1346:      link.click();
+1347:      document.body.removeChild(link);
+1348:      window.URL.revokeObjectURL(url);
+1349:    } catch (error) {
+1350:      console.error('Download failed:', error);
+1351:      // Fallback to direct link if fetch fails (e.g. CORS)
+1352:      const link = document.createElement('a');
+1356:      link.click();
+1360:  const handleDeleteArtwork = async (id: string) => {
+1361:    if (!user) return;
+1363:    if (isDemoMode) {
+1364:      setArtworks(prev => prev.filter(a => a.id !== id));
+1365:      setToast("Deleted from Portfolio (Demo Mode)");
+1370:      await deleteDoc(doc(db, 'users', user.uid, 'artworks', id));
+1371:      setToast("Deleted from Portfolio");
+1372:    } catch (err) {
+1373:      console.error("Delete artwork error:", err);
+1374:      setToast("Failed to delete artwork");
+1378:  const handleReuseSettings = (gen: GeneratedImage) => {
+1379:    setPrompt(gen.prompt);
+1380:    if (gen.aspectRatio) setAspectRatio(gen.aspectRatio);
+1381:    if (gen.styleStrength !== undefined) setStyleStrength(gen.styleStrength);
+1382:    if (gen.referenceImageStrength !== undefined) setReferenceImageStrength(gen.referenceImageStrength);
+1383:    if (gen.negativePrompt !== undefined) setNegativePrompt(gen.negativePrompt);
+1384:    if (gen.imageSize) setImageSize(gen.imageSize as any);
+1385:    if (gen.presetId) setSelectedPresetId(gen.presetId);
+1386:    if (gen.seed !== undefined) setSeed(gen.seed);
+1387:    if (gen.generationMode) setGenerationMode(gen.generationMode);
+1388:    if (gen.referenceImage) setReferenceImage(gen.referenceImage);
+1389:    else setReferenceImage(null);
+1390:    if (gen.elementWeights) setElementWeights(gen.elementWeights);
+1391:    else setElementWeights([]);
+1392:    if (gen.textEffect) {
+1393:      setTextEffectType(gen.textEffect.type as any);
+1394:      setTextEffectColor(gen.textEffect.color);
+1395:      setTextEffectIntensity(gen.textEffect.intensity);
+1397:      setTextEffectType('None');
+1398:      setTextEffectColor('#000000');
+1399:      setTextEffectIntensity(50);
+1402:    setToast("Settings applied to Forge");
+1405:    window.scrollTo({ top: 0, behavior: 'smooth' });
+1408:  const handleRegenerateFromGallery = async (gen: GeneratedImage) => {
+1409:    if (!user || !styleProfile) return;
+1410:    setIsGenerating(true);
+1411:    setLoadingProgress(10);
+1412:    setLoadingMessage('Preparing to regenerate with style adjustments...');
+1413:    setToast("Regenerating with new prompt...");
+1415:      const preset = STYLE_PRESETS.find(p => p.id === gen.presetId);
+1418:      setLoadingMessage('Forging new variations with Gemini...');
+1419:      setLoadingProgress(30);
+1420:      const imageUrl = await generateArt(
+1426:        (gen.imageSize as any) || '1K',
+1429:        gen.generationMode === 'img2img' ? (gen.referenceImage || undefined) : undefined,
+1435:      setLoadingMessage('Finalizing and updating your gallery...');
+1436:      setLoadingProgress(80);
+1437:      if (isDemoMode) {
+1439:          id: `demo_gen_${Date.now()}`,
+1450:          createdAt: new Date().toISOString()
+1452:        setGenerations(prev => [newGen, ...prev]);
+1453:        setSelectedImage(newGen);
+1455:        const compressedBase64 = await compressImage(imageUrl, 1024, saveQuality / 100);
+1456:        const generationRef = doc(collection(db, 'users', user.uid, 'generations'));
+1457:        await setDoc(generationRef, {
+1468:          createdAt: new Date().toISOString(),
+1485:          createdAt: new Date().toISOString()
+1487:        setGenerations(prev => [newGen, ...prev]);
+1488:        setSelectedImage(newGen);
+1490:      setIsEditingPrompt(false);
+1491:      setToast("Regeneration complete!");
+1492:    } catch (err) {
+1493:      console.error("Regeneration error:", err);
+1494:      setError("Failed to regenerate image. Please check your connection and try again.");
+1496:      setIsGenerating(false);
+1497:      setLoadingProgress(0);
+1501:  if (loading || isCheckingApiKey) {
+1502:    return (
+1509:  if (!hasApiKey) {
+1510:    return (
+1526:                onError={(e) => {
+1527:                  (e.target as HTMLImageElement).style.display = 'none';
+1528:                  const sibling = (e.target as HTMLImageElement).nextElementSibling;
+1529:                  if (sibling) (sibling as HTMLElement).style.display = 'block';
+1562:  if (!user) {
+1563:    return (
+1580:                onError={(e) => {
+1581:                  (e.target as HTMLImageElement).style.display = 'none';
+1582:                  const sibling = (e.target as HTMLImageElement).nextElementSibling;
+1583:                  if (sibling) (sibling as HTMLElement).style.display = 'block';
+1636:            {authError && (
+1643:                {authError.redirectUri && (
+1674:  return (
+1675:    <div className={cn("min-h-screen bg-[#E4E3E0] text-[#141414] font-sans transition-all duration-500", isModalOpen && "overflow-hidden")}>
+1678:        {showOnboarding && (
+1693:                onClick={() => setShowOnboarding(false)}
+1727:                  onClick={() => setShowOnboarding(false)}
+1739:      <nav className={cn("border-bottom border-[#141414]/10 bg-white/50 backdrop-blur-md sticky top-0 z-50 transition-all duration-500", isModalOpen && "blur-sm opacity-60 pointer-events-none")}>
+1747:                onClick={() => setView('upload')}
+1748:                onError={(e) => {
+1749:                  (e.target as HTMLImageElement).style.display = 'none';
+1750:                  const sibling = (e.target as HTMLImageElement).nextElementSibling;
+1751:                  if (sibling) (sibling as HTMLElement).style.display = 'block';
+1754:              <h2 className="text-2xl font-serif italic tracking-tighter cursor-pointer hidden" onClick={() => setView('upload')}>cre8dna</h2>
+1757:                  <NavButton active={view === 'upload'} onClick={() => setView('upload')} icon={<Upload className="w-4 h-4" />} label="Training" />
+1758:                  <NavButton active={view === 'generate'} onClick={() => setView('generate')} icon={<Sparkles className="w-4 h-4" />} label="Forge" disabled={!styleProfile} />
+1759:                  <NavButton active={view === 'gallery'} onClick={() => setView('gallery')} icon={<Grid className="w-4 h-4" />} label="Gallery" />
+1760:                  <NavButton active={view === 'community'} onClick={() => setView('community')} icon={<Users className="w-4 h-4" />} label="Community" />
+1761:                  <NavButton active={view === 'chat'} onClick={() => setView('chat')} icon={<MessageCircle className="w-4 h-4" />} label="Mentor" />
+1762:                  <NavButton active={view === 'video'} onClick={() => setView('video')} icon={<Video className="w-4 h-4" />} label="Veo" />
+1766:            {!isPro && (
+1768:                onClick={() => setShowUpgradeModal(true)}
+1774:            {isDemoMode && (
+1776:                onClick={() => {
+1777:                  setIsDemoMode(false);
+1778:                  setUser(null);
+1779:                  setArtworks([]);
+1780:                  setGenerations([]);
+1781:                  setStyleProfile(null);
+1790:              onClick={() => {
+1791:                setEditDisplayName(userProfile?.displayName || user.displayName || '');
+1792:                setEditPhotoURL(userProfile?.photoURL || user.photoURL || '');
+1793:                setShowProfileModal(true);
+1815:      <main className={cn("max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12 pb-24 sm:pb-12 transition-all duration-500", isModalOpen && "blur-sm opacity-60 pointer-events-none")}>
+1817:          {error && (
+1828:              <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+1834:          {toast && (
+1848:          {view === 'upload' && (
+1859:                  Upload at least 10 (ideally 50) examples of your art, designs, or photos. Our AI will analyze the patterns, colors, and textures that define your unique aesthetic.
+1876:                        animate={{ width: `${Math.min((artworks.length / maxArtworks) * 100, 100)}%` }}
+1898:                        {artworks.length >= maxArtworks ? "Delete images to upload more" : `Supports PNG, JPG (Max ${maxArtworks} files)`}
+1903:                  {uploadTasks.length > 0 && (
+1905:                      {uploadTasks.map(task => (
+1923:                            {task.status === 'error' ? (
+1925:                            ) : (
+1928:                                  className={cn("h-full", task.status === 'success' ? "bg-emerald-500" : "bg-[#141414]")}
+1941:                    {artworks.map((art) => (
+1950:                            onClick={() => handleDeleteArtwork(art.id!)}
+1969:                          animate={{ width: `${Math.min((artworks.length / 50) * 100, 100)}%` }}
+1973:                      {styleProfile && (
+1975:                          {Object.entries(styleProfile.categories).slice(0, 4).map(([key, value]) => (
+1978:                                {key.replace(/([A-Z])/g, ' $1').trim()}
+1997:                        className={cn(
+2002:                        {isAnalyzing ? (
+2004:                        ) : (
+2011:                      {artworks.length < 5 && (
+2017:                  {styleProfile && (
+2027:                        {Object.entries(styleProfile.categories).map(([key, value]) => (
+2030:                              {key.replace(/([A-Z])/g, ' $1').trim()}
+2045:                          {isEvaluating ? (
+2049:                          ) : (
+2056:                        <button onClick={() => setView('generate')} className="w-full bg-white text-[#141414] py-3 rounded-xl text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all">
+2067:          {view === 'generate' && (
+2079:                {generations.length > 0 && (
+2081:                    onClick={() => document.getElementById('forge-history')?.scrollIntoView({ behavior: 'smooth' })}
+2098:                      onClick={() => setView('upload')}
+2114:                      {artworks.slice(0, 6).map((art) => (
+2119:                      {artworks.length > 6 && (
+2145:                    {uploadTasks.length > 0 && (
+2147:                        {uploadTasks.map(task => (
+2165:                              {task.status === 'error' ? (
+2167:                              ) : (
+2170:                                    className={cn("h-full", task.status === 'success' ? "bg-emerald-500" : "bg-[#141414]")}
+2187:                      {isAnalyzing ? (
+2191:                      ) : (
+2198:                    {styleProfile && (
+2204:                        {isEvaluating ? (
+2208:                        ) : (
+2218:                {evaluationResults && (
+2229:                          <div className={cn(
+2239:                          onClick={() => setEvaluationResults(null)}
+2248:                      {evaluationResults.images.map((img, i) => (
+2276:                        onClick={() => {
+2277:                          setStyleProfile(evaluationResults.refinedProfile);
+2278:                          setToast("Applied refined style profile!");
+2292:                    onClick={() => {
+2293:                      setGenerationMode('text2img');
+2294:                      setReferenceImage(null);
+2296:                    className={cn(
+2304:                    onClick={() => setGenerationMode('img2img')}
+2305:                    className={cn(
+2317:                      {generationMode === 'img2img' ? 'Additional Instructions (Optional)' : 'Your Prompt'}
+2321:                        onClick={() => setShowTemplateLibrary(true)}
+2328:                      {prompt && (
+2330:                          onClick={() => setShowTemplateModal(true)}
+2338:                      {prompt && (
+2350:                        onClick={() => setShowAdvanced(!showAdvanced)}
+2351:                        className={cn(
+2365:                  {promptTemplates.length > 0 && (
+2368:                        {promptTemplates.slice(0, 3).map((t) => (
+2371:                            onClick={() => {
+2372:                              setPrompt(t.content);
+2373:                              setToast(`Loaded: ${t.name}`);
+2375:                            className={cn(
+2385:                        {promptTemplates.length > 3 && (
+2387:                            onClick={() => setShowTemplateLibrary(true)}
+2399:                    onChange={(e) => setPrompt(e.target.value)}
+2421:                      onChange={(e) => setStyleStrength(parseInt(e.target.value))}
+2435:                          Reference Image {generationMode === 'img2img' ? '(Required)' : '(Optional - Switches to Img2Img)'}
+2441:                        {referenceImage && (
+2443:                            onClick={() => setReferenceImage(null)}
+2451:                      {!referenceImage ? (
+2471:                      ) : (
+2486:                            className={cn(
+2491:                            {isAnalyzingImage ? (
+2493:                            ) : (
+2517:                              onChange={(e) => setReferenceImageStrength(parseInt(e.target.value))}
+2527:                  {showAdvanced && (
+2546:                              {['All', 'Core', 'Classic Art', 'Modern & Digital', 'Traditional', 'Experimental'].map(cat => (
+2549:                                  onClick={() => setActiveStyleCategory(cat)}
+2550:                                  className={cn(
+2564:                          {recentPresetIds.length > 0 && activeStyleCategory === 'All' && (
+2570:                              <div className={cn(
+2574:                                {recentPresetIds.map(id => {
+2575:                                  const preset = STYLE_PRESETS.find(p => p.id === id);
+2576:                                  if (!preset) return null;
+2577:                                  return (
+2580:                                      onClick={() => {
+2581:                                        if (preset.isPro && !isPro) {
+2582:                                          setShowUpgradeModal(true);
+2585:                                        setSelectedPresetId(preset.id);
+2586:                                        updateRecentPresets(preset.id);
+2588:                                      className={cn(
+2600:                                      <p className={cn(
+2606:                                      {selectedPresetId === preset.id && (
+2619:                          <div className={cn(
+2624:                              .filter(p => activeStyleCategory === 'All' || (p as any).category === activeStyleCategory)
+2625:                              .map((preset) => (
+2628:                                  onClick={() => {
+2629:                                    if (preset.isPro && !isPro) {
+2630:                                      setShowUpgradeModal(true);
+2633:                                    setSelectedPresetId(preset.id);
+2634:                                    updateRecentPresets(preset.id);
+2636:                                  className={cn(
+2648:                                  <p className={cn(
+2654:                                  {selectedPresetId === preset.id && (
+2690:                                ].map((ratio) => (
+2693:                                    onClick={() => setAspectRatio(ratio.id)}
+2694:                                    className={cn(
+2720:                                ].map((size) => (
+2723:                                    onClick={() => {
+2724:                                      if (size.pro && !isPro) {
+2725:                                        setShowUpgradeModal(true);
+2728:                                      setImageSize(size.id as any);
+2730:                                    className={cn(
+2771:                              onChange={(e) => setBatchSize(parseInt(e.target.value))}
+2782:                              <label className="text-[10px] font-bold uppercase tracking-widest text-[#141414]/40">Seed (Optional)</label>
+2790:                              onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : undefined)}
+2798:                              <label className="text-[10px] font-bold uppercase tracking-widest text-[#141414]/40">Negative Prompt (Optional)</label>
+2806:                              onChange={(e) => setNegativePrompt(e.target.value)}
+2828:                              onChange={(e) => setSaveQuality(parseInt(e.target.value))}
+2854:                                {['None', 'Outline', 'Shadow', 'Glow'].map((type) => (
+2857:                                    onClick={() => setTextEffectType(type as any)}
+2858:                                    className={cn(
+2882:                                  onChange={(e) => setTextEffectColor(e.target.value)}
+2888:                                  onChange={(e) => setTextEffectColor(e.target.value)}
+2909:                                onChange={(e) => setTextEffectIntensity(parseInt(e.target.value))}
+2932:                              {elementWeights.map((ew, index) => (
+2934:                                  {!isPro && (
+2942:                                      placeholder="Element (e.g. lighting)"
+2944:                                      onChange={(e) => {
+2947:                                        setElementWeights(newWeights);
+2954:                                        onClick={() => {
+2955:                                          const newWeights = elementWeights.filter((_, i) => i !== index);
+2956:                                          setElementWeights(newWeights);
+2970:                                    onChange={(e) => {
+2972:                                      newWeights[index].weight = parseInt(e.target.value);
+2973:                                      setElementWeights(newWeights);
+2981:                                onClick={() => {
+2982:                                  if (!isPro) {
+2983:                                    setShowUpgradeModal(true);
+2986:                                  setElementWeights([...elementWeights, { id: Math.random().toString(36).substr(2, 9), text: '', weight: 50 }]);
+2988:                                className={cn(
+3002:                          onClick={() => {
+3003:                            setAspectRatio('1:1');
+3004:                            setImageSize('1K');
+3005:                            setStyleStrength(50);
+3006:                            setReferenceImageStrength(50);
+3007:                            setBatchSize(1);
+3008:                            setNegativePrompt('');
+3009:                            setSeed(undefined);
+3010:                            setElementWeights([{ id: '1', text: '', weight: 50 }]);
+3011:                            setSelectedPresetId('photorealistic');
+3024:                    disabled={(generationMode === 'text2img' && !prompt) || (generationMode === 'img2img' && !referenceImage) || isGenerating || generations.length + batchSize > maxGenerations}
+3026:                    className={cn(
+3031:                    {isGenerating ? (
+3033:                    ) : (
+3042:                    {!isPro && generations.length + batchSize > maxGenerations && (
+3043:                      <span className="text-amber-500 ml-2 cursor-pointer hover:underline" onClick={() => setShowUpgradeModal(true)}>
+3052:                  {previewImage && (
+3066:                            onClick={() => setPreviewImage(null)}
+3073:                            onClick={async () => {
+3075:                                setIsUpscaling(true);
+3076:                                setToast("Upscaling preview to 4K...");
+3077:                                const upscaledUrl = await upscaleImage(previewImage, prompt, aspectRatio);
+3078:                                handleDownloadImage(upscaledUrl, `upscaled-${Date.now()}`);
+3079:                                setToast("Upscaled image downloaded!");
+3080:                              } catch (err) {
+3081:                                console.error(err);
+3082:                                setToast("Upscale failed");
+3084:                                setIsUpscaling(false);
+3094:                            onClick={() => handleDownloadImage(previewImage, `preview-${Date.now()}`)}
+3101:                            onClick={() => {
+3102:                              setShareImage({
+3106:                                createdAt: new Date().toISOString()
+3108:                              setShowShareModal(true);
+3141:                          disabled={(generationMode === 'text2img' && !prompt) || (generationMode === 'img2img' && !referenceImage) || isGenerating || generations.length + batchSize > maxGenerations}
+3142:                          className={cn(
+3147:                          {isGenerating ? (
+3149:                          ) : (
+3159:                {generations.length > 0 && (
+3167:                        onClick={() => setView('gallery')}
+3175:                      {generations.slice(0, 10).map((gen) => (
+3180:                          onClick={() => setSelectedImage(gen)}
+3190:                                onClick={(e) => {
+3191:                                  e.stopPropagation();
+3192:                                  handleReuseSettings(gen);
+3199:                                onClick={(e) => {
+3200:                                  e.stopPropagation();
+3201:                                  handleDownloadImage(gen.imageUrl, gen.id!);
+3211:                              {new Date(gen.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+3226:          {view === 'gallery' && (
+3244:                      onClick={() => setGalleryViewMode('grid')}
+3245:                      className={cn(
+3254:                      onClick={() => setGalleryViewMode('history')}
+3255:                      className={cn(
+3265:                    onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} 
+3266:                    className={cn(
+3271:                    <Heart className={cn("w-4 h-4", showFavoritesOnly && "fill-current")} /> 
+3275:                  <button onClick={() => setView('generate')} className="bg-[#141414] text-white px-4 sm:px-8 py-3 sm:py-4 rounded-2xl text-[10px] sm:text-xs font-bold uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-[#141414]/10 hover:scale-[1.02] active:scale-[0.98] transition-all">
+3283:              {galleryViewMode === 'grid' ? (
+3285:                  {filteredGenerations.map((gen) => (
+3290:                      onClick={() => setSelectedImage(gen)}
+3306:                                {new Date(gen.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+3310:                                  onClick={(e) => {
+3311:                                    e.stopPropagation();
+3312:                                    setShareImage(gen);
+3313:                                    setShowShareModal(true);
+3321:                                  onClick={(e) => {
+3322:                                    e.stopPropagation();
+3323:                                    handleDownloadImage(gen.imageUrl, gen.id!);
+3331:                                  onClick={(e) => {
+3332:                                    e.stopPropagation();
+3333:                                    handleToggleFavorite(gen.id!, !!gen.isFavorite);
+3335:                                  className={cn(
+3340:                                  <Heart className={cn("w-4 h-4", gen.isFavorite && "fill-current")} />
+3343:                                  onClick={(e) => {
+3344:                                    e.stopPropagation();
+3345:                                    handleReuseSettings(gen);
+3346:                                    setView('generate');
+3354:                                  onClick={(e) => {
+3355:                                    e.stopPropagation();
+3356:                                    handleDeleteGeneration(gen.id!);
+3370:              ) : (
+3372:                  {filteredGenerations.map((gen) => (
+3377:                      onClick={() => setSelectedImage(gen)}
+3388:                          <span>{new Date(gen.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+3394:                          onClick={(e) => {
+3395:                            e.stopPropagation();
+3396:                            handleReuseSettings(gen);
+3397:                            setView('generate');
+3411:              {generations.length === 0 && !showFavoritesOnly && (
+3420:                  <button onClick={() => setView('generate')} className="text-[#141414] font-serif italic border-b border-[#141414] pb-1 hover:opacity-60 transition-opacity">
+3426:              {showFavoritesOnly && filteredGenerations.length === 0 && (
+3440:          {view === 'community' && (
+3459:                    onClick={() => {
+3460:                      setPrompt("A cyberpunk city street scene painted in the style of Leonardo da Vinci, neon lights, classical composition...");
+3461:                      setView('generate');
+3483:                    {communityPosts.length > 0 ? (
+3484:                      communityPosts.map((post) => (
+3507:                                  onClick={() => handleLikePost(post.id!)}
+3517:                    ) : (
+3559:          {view === 'chat' && (
+3565:              onSend={() => handleSendMessage()}
+3576:          {view === 'video' && (
+3593:        {selectedImage && (
+3599:            onClick={() => {
+3600:              setSelectedImage(null);
+3601:              setCompareImage(null);
+3602:              setIsSelectingCompare(false);
+3603:              setIsEditingPrompt(false);
+3604:              setEditedPrompt('');
+3611:                className={cn(
+3613:                  (compareImage || isSelectingCompare) ? "max-w-[90vw] h-[80vh]" : "max-w-6xl"
+3615:                onClick={(e) => e.stopPropagation()}
+3617:                {isSelectingCompare ? (
+3624:                      <button onClick={() => setIsSelectingCompare(false)} className="p-2 hover:bg-[#141414]/5 rounded-full transition-colors">
+3631:                          .filter(g => g.id !== selectedImage.id && g.prompt === selectedImage.prompt)
+3632:                          .map((gen) => (
+3637:                              onClick={() => {
+3638:                                setCompareImage(gen);
+3639:                                setIsSelectingCompare(false);
+3650:                                  {new Date(gen.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+3658:                ) : compareImage ? (
+3662:                    <button onClick={() => setCompareImage(null)} className="p-2 hover:bg-[#141414]/5 rounded-full transition-colors">
+3675:                        {({ zoomIn, zoomOut, resetTransform }) => (
+3679:                                onClick={() => zoomIn()}
+3686:                                onClick={() => zoomOut()}
+3693:                                onClick={() => resetTransform()}
+3702:                                {/* Previous Image (Base) */}
+3707:                                  style={{ opacity: 1 - (compareSliderValue / 100) }}
+3709:                                {/* Current Image (Overlay) */}
+3734:                          onChange={(e) => setCompareSliderValue(Number(e.target.value))}
+3752:                            <p className="text-xs font-medium">{new Date(compareImage.createdAt).toLocaleDateString()}</p>
+3754:                              onClick={() => handleDownloadImage(compareImage.imageUrl, compareImage.id!)}
+3766:                            <p className="text-xs font-medium">{new Date(selectedImage.createdAt).toLocaleDateString()}</p>
+3768:                              onClick={() => handleDownloadImage(selectedImage.imageUrl, selectedImage.id!)}
+3780:              ) : (
+3790:                      {({ zoomIn, zoomOut, resetTransform }) => (
+3794:                              onClick={() => zoomIn()}
+3801:                              onClick={() => zoomOut()}
+3808:                              onClick={() => resetTransform()}
+3821:                    {!isPro && (
+3827:                      onClick={() => {
+3828:                        setSelectedImage(null);
+3829:                        setCompareImage(null);
+3830:                        setIsEditingPrompt(false);
+3831:                        setEditedPrompt('');
+3842:                        <button onClick={() => {
+3843:                          setSelectedImage(null);
+3844:                          setCompareImage(null);
+3845:                          setIsEditingPrompt(false);
+3846:                          setEditedPrompt('');
+3852:                        {isEditingPrompt ? (
+3856:                              onChange={(e) => setEditedPrompt(e.target.value)}
+3862:                                onClick={() => handleRegenerateFromGallery(selectedImage)}
+3863:                                disabled={isGenerating || (selectedImage.generationMode === 'text2img' && !editedPrompt.trim())}
+3870:                                onClick={() => setIsEditingPrompt(false)}
+3877:                        ) : (
+3881:                              onClick={() => {
+3882:                                setEditedPrompt(selectedImage.prompt);
+3883:                                setIsEditingPrompt(true);
+3892:                          Forged on {new Date(selectedImage.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+3900:                        {selectedImage.textEffect && selectedImage.textEffect.type !== 'None' && (
+3916:                      {generations.filter(g => g.id !== selectedImage.id && g.prompt === selectedImage.prompt).length > 0 && (
+3918:                          onClick={() => setIsSelectingCompare(true)}
+3925:                        onClick={() => handleUpscaleImage(selectedImage)}
+3930:                        {isUpscaling ? 'Upscaling...' : 'Upscale Image (4K)'}
+3934:                          onClick={() => {
+3935:                            handleReuseSettings(selectedImage);
+3936:                            setSelectedImage(null);
+3937:                            setView('generate');
+3944:                          onClick={() => handleDownloadImage(selectedImage.imageUrl, selectedImage.id!)}
+3950:                          onClick={() => {
+3951:                            setShareImage(selectedImage);
+3952:                            setShowShareModal(true);
+3961:                          onClick={() => handleShareToCommunity(selectedImage)}
+3967:                          onClick={() => {
+3968:                            handleToggleFavorite(selectedImage.id!, !!selectedImage.isFavorite);
+3970:                          className={cn(
+3975:                          <Heart className={cn("w-5 h-5", selectedImage.isFavorite && "fill-current")} />
+3978:                          onClick={() => {
+3979:                            handleDeleteGeneration(selectedImage.id!);
+3997:        {view === 'upload' && styleProfile && (
+4003:            onClick={() => setView('generate')}
+4009:        {view === 'gallery' && (
+4015:            onClick={() => setView('generate')}
+4023:      <footer className={cn("border-t border-[#141414]/10 py-12 pb-32 sm:pb-12 mt-24 transition-all duration-500", isModalOpen && "blur-sm opacity-60 pointer-events-none")}>
+4031:                onError={(e) => {
+4032:                  (e.target as HTMLImageElement).style.display = 'none';
+4033:                  const sibling = (e.target as HTMLImageElement).nextElementSibling;
+4034:                  if (sibling) (sibling as HTMLElement).style.display = 'block';
+4043:            <button onClick={() => setShowFeedbackModal(true)} className="hover:text-[#141414] flex items-center gap-1"><MessageCircle className="w-3 h-3" /> Suggest a Feature</button>
+4044:            <button onClick={() => { setPolicyTab('terms'); setShowPolicies(true); }} className="hover:text-[#141414]">Terms</button>
+4045:            <button onClick={() => { setPolicyTab('privacy'); setShowPolicies(true); }} className="hover:text-[#141414]">Privacy</button>
+4053:        {showProfileModal && user && (
+4059:              onClick={() => setShowProfileModal(false)}
+4070:                <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-[#141414]/5 rounded-full transition-colors">
+4092:                      onChange={(e) => setEditDisplayName(e.target.value)}
+4102:                      onChange={(e) => setEditPhotoURL(e.target.value)}
+4109:                  {user.email === 'actoftod@gmail.com' && (
+4128:                      {siteLogo && (
+4141:                  onClick={() => setShowProfileModal(false)}
+4148:                  disabled={!editDisplayName.trim() || isSavingProfile}
+4162:        {showTemplateModal && (
+4168:              onClick={() => setShowTemplateModal(false)}
+4179:                <button onClick={() => setShowTemplateModal(false)} className="p-2 hover:bg-[#141414]/5 rounded-full transition-colors">
+4190:                    onChange={(e) => setTemplateName(e.target.value)}
+4206:                  onClick={() => setShowTemplateModal(false)}
+4227:        {showTemplateLibrary && (
+4233:              onClick={() => setShowTemplateLibrary(false)}
+4247:                <button onClick={() => setShowTemplateLibrary(false)} className="p-3 hover:bg-[#141414]/5 rounded-full transition-colors">
+4253:                {promptTemplates.length === 0 ? (
+4260:                ) : (
+4262:                    {promptTemplates.map((t) => (
+4265:                        className={cn(
+4271:                        onClick={() => {
+4272:                          setPrompt(t.content);
+4273:                          setToast(`Loaded: ${t.name}`);
+4274:                          setShowTemplateLibrary(false);
+4280:                            onClick={(e) => {
+4281:                              e.stopPropagation();
+4282:                              handleDeleteTemplate(t.id);
+4284:                            className={cn(
+4294:                        <p className={cn(
+4301:                          <span className={cn(
+4305:                            {new Date(t.createdAt).toLocaleDateString()}
+4307:                          {prompt === t.content && (
+4323:        {showUpgradeModal && (
+4329:              onClick={() => setShowUpgradeModal(false)}
+4339:                onClick={() => setShowUpgradeModal(false)}
+4375:                    onClick={() => { setIsPro(true); setShowUpgradeModal(false); setToast("Welcome to Pro!"); }}
+4385:                    onClick={() => { setIsPro(true); setShowUpgradeModal(false); setToast("Welcome to Pro!"); }}
+4404:                  onClick={() => { setIsPro(true); setShowUpgradeModal(false); setToast("Welcome to Pro for Life!"); }}
+4421:        {showFeedbackModal && (
+4427:              onClick={() => setShowFeedbackModal(false)}
+4437:                onClick={() => setShowFeedbackModal(false)}
+4453:                onChange={(e) => setFeedbackText(e.target.value)}
+4459:                onClick={() => {
+4460:                  setToast("Thanks for your feedback!");
+4461:                  setFeedbackText('');
+4462:                  setShowFeedbackModal(false);
+4464:                disabled={!feedbackText.trim()}
+4476:        {showShareModal && shareImage && (
+4482:              onClick={() => setShowShareModal(false)}
+4498:                    onClick={() => setShowShareModal(false)}
+4520:                        onClick={() => {
+4521:                          navigator.clipboard.writeText(shareImage.imageUrl);
+4522:                          setToast("Link copied to clipboard!");
+4533:                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out this AI masterpiece I forged with Forge! #AIArt #ForgeAI`)}&url=${encodeURIComponent(shareImage.imageUrl)}`}
+4541:                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareImage.imageUrl)}`}
+4549:                      href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareImage.imageUrl)}&media=${encodeURIComponent(shareImage.imageUrl)}&description=${encodeURIComponent(shareImage.prompt)}`}
+4565:        {showPolicies && (
+4568:            onClose={() => setShowPolicies(false)} 
+4577:          <MobileNavButton active={view === 'upload'} onClick={() => setView('upload')} icon={<Upload className="w-5 h-5" />} label="Train" />
+4578:          <MobileNavButton active={view === 'generate'} onClick={() => setView('generate')} icon={<Sparkles className="w-5 h-5" />} label="Forge" disabled={!styleProfile} />
+4579:          <MobileNavButton active={view === 'gallery'} onClick={() => setView('gallery')} icon={<Grid className="w-5 h-5" />} label="Gallery" />
+4580:          <MobileNavButton active={view === 'community'} onClick={() => setView('community')} icon={<Users className="w-5 h-5" />} label="Community" />
+4581:          <MobileNavButton active={view === 'chat'} onClick={() => setView('chat')} icon={<MessageCircle className="w-5 h-5" />} label="Mentor" />
+4582:          <MobileNavButton active={view === 'video'} onClick={() => setView('video')} icon={<Video className="w-5 h-5" />} label="Veo" />
+4589:function MobileNavButton({ active, onClick, icon, label, disabled = false }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, disabled?: boolean }) {
+4590:  return (
+4594:      className={cn(
+4606:function NavButton({ active, onClick, icon, label, disabled = false }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, disabled?: boolean }) {
+4607:  return (
+4611:      className={cn(
+4623:function ChatView({ 
+4638:  setInput: (v: string) => void, 
+4639:  onSend: () => void, 
+4642:  onStartRecording: () => void,
+4643:  onStopRecording: () => void,
+4644:  onSpeak: (text: string) => void,
+4645:  onSearch: (q: string) => void,
+4646:  onMap: (q: string) => void
+4648:  const scrollRef = useRef<HTMLDivElement>(null);
+4650:  useEffect(() => {
+4651:    if (scrollRef.current) {
+4656:  return (
+4661:      className="flex flex-col h-[calc(100vh-200px)] bg-white rounded-[2rem] shadow-xl border border-[#141414]/5 overflow-hidden"
+4675:            <button onClick={() => onSearch(input)} className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors">
+4680:            <button onClick={() => onMap(input)} className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-lg transition-colors">
+4688:        {messages.length === 0 && (
+4694:        {messages.map((m) => (
+4695:          <div key={m.id} className={cn("flex", m.role === 'user' ? "justify-end" : "justify-start")}>
+4696:            <div className={cn(
+4703:              {m.sources && m.sources.length > 0 && (
+4707:                    {m.sources.map((s: any, i: number) => (
+4716:                <span className="text-[8px] opacity-40">{new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+4717:                {m.role === 'assistant' && (
+4718:                  <button onClick={() => onSpeak(m.content)} className="p-1 hover:bg-white/10 rounded-md transition-colors">
+4726:        {isChatting && (
+4741:            className={cn(
+4751:            onChange={(e) => setInput(e.target.value)}
+4752:            onKeyDown={(e) => e.key === 'Enter' && onSend()}
+4758:            disabled={!input.trim() || isChatting}
+4769:function VideoView({ 
+4779:  setPrompt: (v: string) => void, 
+4780:  onGenerate: () => void, 
+4784:  setAspectRatio: (v: '16:9' | '9:16') => void
+4786:  return (
+4807:                onChange={(e) => setPrompt(e.target.value)}
+4817:                  onClick={() => setAspectRatio('16:9')}
+4818:                  className={cn(
+4826:                  onClick={() => setAspectRatio('9:16')}
+4827:                  className={cn(
+4839:              disabled={!prompt.trim() || isGenerating}
+4849:          <div className={cn(
+4853:            {videoUrl ? (
+4861:            ) : (
+4867:            {isGenerating && (

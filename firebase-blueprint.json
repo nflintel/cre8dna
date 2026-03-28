@@ -1,0 +1,206 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user information and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique ID of the user." },
+        "displayName": { "type": "string", "description": "The display name of the user." },
+        "email": { "type": "string", "format": "email", "description": "The email address of the user." },
+        "photoURL": { "type": "string", "format": "uri", "description": "The URL of the user's profile photo." },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "The role of the user." },
+        "isPro": { "type": "boolean", "description": "Whether the user has a Pro subscription." },
+        "credits": { "type": "number", "description": "The number of in-app credits the user has." },
+        "styleProfile": { "type": "object", "description": "The analyzed style DNA of the user." },
+        "lastAnalyzedAt": { "type": "string", "format": "date-time", "description": "When the style was last analyzed." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the profile was created." }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Artwork": {
+      "title": "Artwork",
+      "description": "Represents an uploaded artwork for style training.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the artwork." },
+        "userId": { "type": "string", "description": "The ID of the user who owns this artwork." },
+        "imageUrl": { "type": "string", "format": "uri", "description": "The URL of the artwork image." },
+        "driveFileId": { "type": "string", "description": "The Google Drive file ID." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the artwork was uploaded." }
+      },
+      "required": ["id", "userId", "imageUrl"]
+    },
+    "Generation": {
+      "title": "Generation",
+      "description": "Represents a generated image.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the generation." },
+        "userId": { "type": "string", "description": "The ID of the user who owns this generation." },
+        "imageUrl": { "type": "string", "format": "uri", "description": "The URL of the generated image." },
+        "driveFileId": { "type": "string", "description": "The Google Drive file ID." },
+        "prompt": { "type": "string", "description": "The prompt used for generation." },
+        "aspectRatio": { "type": "string", "description": "The aspect ratio used." },
+        "styleStrength": { "type": "number", "description": "The style strength used." },
+        "negativePrompt": { "type": "string", "description": "The negative prompt used." },
+        "generationMode": { "type": "string", "description": "The generation mode (e.g., 'creative', 'faithful')." },
+        "referenceImage": { "type": "string", "description": "The reference image URL if used." },
+        "elementWeights": { "type": "string", "description": "JSON string of element weights." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the image was generated." }
+      },
+      "required": ["id", "userId", "imageUrl", "prompt"]
+    },
+    "PromptTemplate": {
+      "title": "Prompt Template",
+      "description": "Represents a saved prompt template.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the template." },
+        "userId": { "type": "string", "description": "The ID of the user who owns this template." },
+        "name": { "type": "string", "description": "The name of the template." },
+        "content": { "type": "string", "description": "The actual prompt text." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the template was created." }
+      },
+      "required": ["id", "userId", "name", "content"]
+    },
+    "CommunityPost": {
+      "title": "Community Post",
+      "description": "Represents a shared generation in the community feed.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the post." },
+        "userId": { "type": "string", "description": "The ID of the user who created this post." },
+        "authorName": { "type": "string", "description": "The display name of the author." },
+        "authorPhoto": { "type": "string", "format": "uri", "description": "The URL of the author's profile photo." },
+        "imageUrl": { "type": "string", "format": "uri", "description": "The URL of the generated image." },
+        "prompt": { "type": "string", "description": "The prompt used for generation." },
+        "styleProfile": { "type": "string", "description": "The style profile used for generation." },
+        "likesCount": { "type": "number", "description": "The number of likes this post has received." },
+        "isRemixable": { "type": "boolean", "description": "Whether others can remix this post using its DNA." },
+        "remixCount": { "type": "number", "description": "The number of times this post has been remixed." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the post was created." }
+      },
+      "required": ["id", "userId", "authorName", "imageUrl", "prompt", "styleProfile", "likesCount"]
+    },
+    "StyleBattle": {
+      "title": "Style Battle",
+      "description": "A real-time competition between two DNA styles.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the battle." },
+        "prompt": { "type": "string", "description": "The global prompt for the battle." },
+        "imageA": { "type": "string", "format": "uri", "description": "Image from DNA A." },
+        "imageB": { "type": "string", "format": "uri", "description": "Image from DNA B." },
+        "userIdA": { "type": "string", "description": "User ID of creator A." },
+        "userIdB": { "type": "string", "description": "User ID of creator B." },
+        "votesA": { "type": "number", "description": "Votes for Image A." },
+        "votesB": { "type": "number", "description": "Votes for Image B." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the battle started." },
+        "expiresAt": { "type": "string", "format": "date-time", "description": "When the battle ends." }
+      },
+      "required": ["id", "prompt", "imageA", "imageB", "userIdA", "userIdB", "votesA", "votesB"]
+    },
+    "Tribe": {
+      "title": "DNA Tribe",
+      "description": "A collaborative group sharing a collective Style DNA.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the tribe." },
+        "name": { "type": "string", "description": "The name of the tribe." },
+        "description": { "type": "string", "description": "The description of the tribe." },
+        "masterDNA": { "type": "string", "description": "The mathematical blend of all members' DNA." },
+        "memberCount": { "type": "number", "description": "The number of members in the tribe." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the tribe was created." }
+      },
+      "required": ["id", "name", "masterDNA", "memberCount"]
+    },
+    "MarketplaceListing": {
+      "title": "Marketplace Listing",
+      "description": "A Style DNA listed for rent/sale.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID of the listing." },
+        "userId": { "type": "string", "description": "The ID of the creator." },
+        "authorName": { "type": "string", "description": "The name of the creator." },
+        "dnaSummary": { "type": "string", "description": "The DNA summary being listed." },
+        "price": { "type": "number", "description": "The price in credits." },
+        "salesCount": { "type": "number", "description": "The number of times this DNA has been rented." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the listing was created." }
+      },
+      "required": ["id", "userId", "authorName", "dnaSummary", "price", "salesCount"]
+    },
+    "Library": {
+      "title": "Style Library",
+      "description": "Stores a collection of style image URLs and analyzed DNA for a user.",
+      "type": "object",
+      "properties": {
+        "styleImages": { "type": "array", "items": { "type": "string" }, "description": "List of URLs for style images." },
+        "styleDNA": { "type": "string", "description": "The analyzed artistic DNA summary." },
+        "status": { "type": "string", "enum": ["pending", "analyzed"], "description": "The status of the style analysis." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "When the library was last updated." }
+      },
+      "required": ["styleImages"]
+    },
+    "UserMemory": {
+      "title": "User Memory",
+      "description": "Stores user preferences and interaction history for personalized AI responses.",
+      "type": "object",
+      "properties": {
+        "preferredAspectRatios": { "type": "array", "items": { "type": "string" }, "description": "List of preferred aspect ratios." },
+        "frequentKeywords": { "type": "array", "items": { "type": "string" }, "description": "List of frequently used keywords." },
+        "lastProjectContext": { "type": "string", "description": "Context from the last active project." },
+        "stylePreferences": { "type": "object", "description": "Weights for certain style elements." },
+        "interactionsCount": { "type": "number", "description": "Number of interactions with the AI." },
+        "lastUsedPersona": { "type": "string", "description": "The last persona used by the user." }
+      },
+      "required": ["preferredAspectRatios", "frequentKeywords", "interactionsCount"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Collection of user profiles."
+    },
+    "/users/{userId}/artworks/{artworkId}": {
+      "schema": "Artwork",
+      "description": "Collection of artworks for a specific user."
+    },
+    "/users/{userId}/generations/{generationId}": {
+      "schema": "Generation",
+      "description": "Collection of generated images for a specific user."
+    },
+    "/users/{userId}/templates/{templateId}": {
+      "schema": "PromptTemplate",
+      "description": "Collection of saved prompt templates for a specific user."
+    },
+    "/community_posts/{postId}": {
+      "schema": "CommunityPost",
+      "description": "Collection of all community posts."
+    },
+    "/style_battles/{battleId}": {
+      "schema": "StyleBattle",
+      "description": "Collection of active and past style battles."
+    },
+    "/tribes/{tribeId}": {
+      "schema": "Tribe",
+      "description": "Collection of DNA tribes."
+    },
+    "/marketplace_listings/{listingId}": {
+      "schema": "MarketplaceListing",
+      "description": "Collection of DNA marketplace listings."
+    },
+    "/config/{configId}": {
+      "schema": "object",
+      "description": "Global application configuration."
+    },
+    "/libraries/{userId}": {
+      "schema": "Library",
+      "description": "Collection of user style libraries."
+    },
+    "/users/{userId}/memory/{memoryId}": {
+      "schema": "UserMemory",
+      "description": "Collection of user memory documents for personalization."
+    }
+  }
+}

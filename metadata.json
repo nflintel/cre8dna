@@ -1,0 +1,5 @@
+{
+  "name": "cre8dna",
+  "description": "An AI-powered art style replicator that analyzes your portfolio and generates new art in your unique style, saving everything directly to your Google Drive.",
+  "requestFramePermissions": ["camera"]
+}
